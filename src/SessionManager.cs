@@ -17,7 +17,7 @@ public sealed class Session
     public string Describe() => Kind switch
     {
         SessionKind.Indefinite => "Indefinitely",
-        SessionKind.Duration or SessionKind.Until => $"Until {Ends:t} ({Format(Remaining!.Value)} left)",
+        SessionKind.Duration or SessionKind.Until => $"Until {(Ends!.Value.Date == DateTime.Today ? $"{Ends:t}" : $"{Ends:ddd t}")} ({Format(Remaining!.Value)} left)",
         SessionKind.WhileApp => $"While {AppName} is running",
         SessionKind.WhileDownloading => "While a file is downloading",
         SessionKind.Trigger => $"Trigger: {Trigger!.Name}",
@@ -89,6 +89,15 @@ public sealed class SessionManager
         Changed?.Invoke();
     }
 
+    /// <summary>Changes the saved default and applies it to the running session too.</summary>
+    public void SetDisplaySleep(bool allow)
+    {
+        _settings.AllowDisplaySleep = allow;
+        if (Current is { } s) s.AllowDisplaySleep = allow;
+        ApplyExecutionState();
+        Changed?.Invoke();
+    }
+
     public void ToggleDisplaySleep()
     {
         if (Current is { } s) s.AllowDisplaySleep = !s.AllowDisplaySleep;
@@ -102,7 +111,7 @@ public sealed class SessionManager
         if (Current is not { } s) return;
         var flags = Native.ExecutionState.Continuous | Native.ExecutionState.SystemRequired;
         // On Windows a display request also suppresses the screen saver, so "allow screen saver after N
-        // minutes" is implemented by dropping the display request once that time has elapsed.
+        // minutes of inactivity" is implemented by dropping the display request while the user is away.
         if (!s.AllowDisplaySleep && !s.ScreenSaverAllowed) flags |= Native.ExecutionState.DisplayRequired;
         Native.SetThreadExecutionState(flags);
     }
@@ -157,10 +166,10 @@ public sealed class SessionManager
             return;
         }
 
-        if (!s.ScreenSaverAllowed && _settings.AllowScreenSaverAfterMinutes > 0
-            && DateTime.Now - s.Started >= TimeSpan.FromMinutes(_settings.AllowScreenSaverAfterMinutes))
+        bool screenSaver = _settings.AllowScreenSaver && Native.IdleSeconds() >= _settings.AllowScreenSaverAfterMinutes * 60;
+        if (screenSaver != s.ScreenSaverAllowed)
         {
-            s.ScreenSaverAllowed = true;
+            s.ScreenSaverAllowed = screenSaver;
             ApplyExecutionState();
         }
 

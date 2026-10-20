@@ -22,8 +22,8 @@ type SubmenuKey = "minutes" | "hours" | "apps";
 type Notice = { id: number; title: string; body: string };
 
 const FLUENT = [0, 0, 0, 1] as const; // Windows 11 decelerate curve
-const MINUTES = [5, 10, 15, 30, 45];
-const HOURS = [1, 2, 3, 4, 6, 8, 12, 24];
+const MINUTES = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+const HOURS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 24];
 const APPS = ["WindowsTerminal", "Code", "chrome", "Teams", "obs64"];
 
 const AGENT_LINES = [
@@ -109,12 +109,14 @@ export function TrayDemo() {
 
   const submenuItems =
     submenu?.key === "minutes"
-      ? MINUTES.map((n) => ({ label: `${n} minutes`, run: () => start(`${n} minutes`, n) }))
+      ? MINUTES.map((n) => ({ label: `${n} minutes`, short: `${n}m`, run: () => start(`${n} minutes`, n) }))
       : submenu?.key === "hours"
-        ? HOURS.map((n) => ({ label: n === 1 ? "1 hour" : `${n} hours`, run: () => start(`${n} hours`, n * 60) }))
+        ? HOURS.map((n) => ({ label: n === 1 ? "1 hour" : `${n} hours`, short: `${n}h`, run: () => start(`${n} hours`, n * 60) }))
         : submenu?.key === "apps"
-          ? APPS.map((a) => ({ label: a, run: () => start(`While ${a} is running`, null) }))
+          ? APPS.map((a) => ({ label: a, short: a, run: () => start(`While ${a} is running`, null) }))
           : [];
+  // Minutes and hours are long lists; two columns keep them inside the desktop.
+  const twoColumns = submenuItems.length > 6;
 
   const openSub = (key: SubmenuKey, el: HTMLElement) => setSubmenu({ key, top: el.offsetTop });
 
@@ -184,12 +186,24 @@ export function TrayDemo() {
                       animate={{ opacity: 1, transform: "translateX(0px)" }}
                       exit={{ opacity: 0, transition: { duration: 0.08 } }}
                       transition={{ duration: 0.2, ease: FLUENT }}
-                      style={{ top: Math.max(0, submenu.top - 4) }}
-                      className="absolute right-[calc(100%+4px)] w-36 rounded-lg border border-slate-300/70 bg-white/95 p-1 text-[13px] shadow-[0_8px_24px_rgb(15_23_42/0.16)] backdrop-blur-md sm:w-40"
+                      style={{ top: twoColumns ? 0 : Math.max(0, submenu.top - 4) }}
+                      className={cn(
+                        "absolute right-[calc(100%+4px)] rounded-lg border border-slate-300/70 bg-white/95 p-1 text-[13px] shadow-[0_8px_24px_rgb(15_23_42/0.16)] backdrop-blur-md",
+                        twoColumns ? "grid w-28 grid-cols-2 text-xs sm:w-56 sm:text-[13px]" : "w-36 sm:w-40",
+                      )}
                     >
                       {submenuItems.map((item) => (
                         <li key={item.label}>
-                          <Item onClick={item.run}>{item.label}</Item>
+                          <Item onClick={item.run} compact={twoColumns}>
+                            {twoColumns ? (
+                              <>
+                                <span className="sm:hidden">{item.short}</span>
+                                <span className="hidden sm:inline">{item.label}</span>
+                              </>
+                            ) : (
+                              item.label
+                            )}
+                          </Item>
                         </li>
                       ))}
                     </motion.ul>
@@ -357,6 +371,7 @@ function Item({
   hasSubmenu,
   active,
   checked,
+  compact,
 }: {
   children: React.ReactNode;
   onClick: (el: HTMLButtonElement) => void;
@@ -364,6 +379,8 @@ function Item({
   hasSubmenu?: boolean;
   active?: boolean;
   checked?: boolean;
+  /** Drops the check column so short labels fit in narrow, multi-column submenus. */
+  compact?: boolean;
 }) {
   return (
     <button
@@ -377,7 +394,7 @@ function Item({
         active && "bg-slate-900/[0.06]",
       )}
     >
-      <Check className={cn("size-3.5 shrink-0 text-sky-600", !checked && "invisible")} aria-hidden />
+      {!compact && <Check className={cn("size-3.5 shrink-0 text-sky-600", !checked && "invisible")} aria-hidden />}
       <span className="flex-1 truncate">{children}</span>
       {hasSubmenu && <ChevronRight className="size-3.5 text-slate-400" aria-hidden />}
     </button>

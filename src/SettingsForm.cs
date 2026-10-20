@@ -20,12 +20,14 @@ public sealed class SettingsForm : Form
             CheckBox("Launch WakeKeeper at login", _s.LaunchAtLogin, v => _s.LaunchAtLogin = v),
             CheckBox("Start session when WakeKeeper launches", _s.StartSessionAtLaunch, v => _s.StartSessionAtLaunch = v),
             CheckBox("Start session after waking from sleep", _s.StartSessionAfterWake, v => _s.StartSessionAfterWake = v),
-            CheckBox("Debug mode (writes debug.log to the settings folder)", Log.Enabled, v => Log.Enabled = v)));
+            CheckBox("Show session time remaining on the tray icon", _s.ShowTimeRemainingInTray, v => _s.ShowTimeRemainingInTray = v),
+            CheckBox("Debug mode (writes debug.log to the settings folder)", _s.DebugMode, v => _s.DebugMode = Log.Enabled = v)));
 
         tabs.TabPages.Add(Page("Session Defaults",
             Number("Default duration (minutes, 0 = indefinite):", _s.DefaultDurationMinutes, 0, 10080, v => _s.DefaultDurationMinutes = v),
             CheckBox("Allow display sleep", _s.AllowDisplaySleep, v => _s.AllowDisplaySleep = v),
-            Number("Allow screen saver / display off after (minutes, 0 = never):", _s.AllowScreenSaverAfterMinutes, 0, 1440, v => _s.AllowScreenSaverAfterMinutes = v),
+            CheckBox("Allow screen saver after a period of inactivity", _s.AllowScreenSaver, v => _s.AllowScreenSaver = v),
+            Number("    after (minutes of inactivity):", _s.AllowScreenSaverAfterMinutes, 1, 1440, v => _s.AllowScreenSaverAfterMinutes = v),
             CheckBox("Keep awake when laptop lid is closed (changes the power plan's lid action during sessions)", _s.PreventSleepWhenLidClosed, v => _s.PreventSleepWhenLidClosed = v),
             CheckBox("End session if battery charge is below:", _s.EndSessionOnLowBattery, v => _s.EndSessionOnLowBattery = v),
             Number("    Battery threshold (%):", _s.LowBatteryPercent, 1, 99, v => _s.LowBatteryPercent = v),

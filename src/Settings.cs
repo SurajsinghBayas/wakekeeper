@@ -68,7 +68,8 @@ public sealed class Settings
     // Session defaults (non-Trigger sessions)
     public int DefaultDurationMinutes { get; set; } = 0; // 0 = indefinite
     public bool AllowDisplaySleep { get; set; }
-    public int AllowScreenSaverAfterMinutes { get; set; } = 0; // 0 = never
+    public bool AllowScreenSaver { get; set; }
+    public int AllowScreenSaverAfterMinutes { get; set; } = 45; // of inactivity
     public bool PreventSleepWhenLidClosed { get; set; }
     public bool EndSessionOnLowBattery { get; set; }
     public int LowBatteryPercent { get; set; } = 10;
@@ -87,6 +88,10 @@ public sealed class Settings
     public bool NotifyOnStartEnd { get; set; } = true;
     public bool NotifyOnTriggerStart { get; set; } = true;
     public int ReminderEveryMinutes { get; set; } = 0;
+    public bool ShowTimeRemainingInTray { get; set; }
+
+    // Support
+    public bool DebugMode { get; set; }
 
     // Triggers
     public bool TriggersEnabled { get; set; } = true;
@@ -118,7 +123,14 @@ public sealed class Settings
         try
         {
             if (File.Exists(FilePath))
-                return JsonSerializer.Deserialize<Settings>(File.ReadAllText(FilePath), Json) ?? new();
+            {
+                var json = File.ReadAllText(FilePath);
+                var s = JsonSerializer.Deserialize<Settings>(json, Json) ?? new();
+                // 1.1 stored "0 = never" in the minutes field instead of a separate switch.
+                if (!json.Contains("\"AllowScreenSaver\"")) s.AllowScreenSaver = s.AllowScreenSaverAfterMinutes > 0;
+                if (s.AllowScreenSaverAfterMinutes <= 0) s.AllowScreenSaverAfterMinutes = 45;
+                return s;
+            }
         }
         catch (Exception ex) { Log.Write($"Settings load failed: {ex.Message}"); }
         return new();
@@ -136,6 +148,7 @@ public sealed class Settings
 internal static class Log
 {
     public static bool Enabled { get; set; }
+    public static string FilePath => Path.Combine(Settings.Folder, "debug.log");
 
     public static void Write(string message)
     {
@@ -143,7 +156,7 @@ internal static class Log
         try
         {
             Directory.CreateDirectory(Settings.Folder);
-            File.AppendAllText(Path.Combine(Settings.Folder, "debug.log"), $"{DateTime.Now:O} {message}{Environment.NewLine}");
+            File.AppendAllText(FilePath, $"{DateTime.Now:O} {message}{Environment.NewLine}");
         }
         catch { /* logging must never crash the app */ }
     }

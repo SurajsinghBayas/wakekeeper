@@ -9,7 +9,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>WakeKeeper</AssemblyName>
     <RootNamespace>WakeKeeper</RootNamespace>
-    <Version>1.1.0</Version>
+    <Version>1.2.0</Version>
     <Product>WakeKeeper</Product>
     <Company>WakeKeeper</Company>
     <Description>Keeps your Windows PC awake</Description>
