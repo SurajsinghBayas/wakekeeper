@@ -10,25 +10,44 @@ public sealed class SettingsForm : Form
     {
         _s = settings;
         Text = "WakeKeeper Settings";
-        Size = new Size(560, 520);
-        MinimumSize = new Size(480, 420);
+        AutoScaleMode = AutoScaleMode.Dpi;
+        AutoScaleDimensions = new SizeF(96, 96);
+        Size = new Size(600, 560);
+        MinimumSize = new Size(520, 460);
         StartPosition = FormStartPosition.CenterScreen;
-        Font = SystemFonts.MessageBoxFont;
+        Font = new Font("Segoe UI", 9.75f);
+        if (Environment.ProcessPath is { } path) Icon = Icon.ExtractAssociatedIcon(path);
 
-        var tabs = new TabControl { Dock = DockStyle.Fill };
+        var tabs = new TabControl { Dock = DockStyle.Fill, Padding = new Point(12, 5) };
+        var openLog = new LinkLabel { Text = "Open diagnostic log", AutoSize = true, Enabled = File.Exists(Log.FilePath) };
+        openLog.LinkClicked += (_, _) => Links.Open(Log.FilePath);
         tabs.TabPages.Add(Page("General",
-            CheckBox("Launch WakeKeeper at login", _s.LaunchAtLogin, v => _s.LaunchAtLogin = v),
-            CheckBox("Start session when WakeKeeper launches", _s.StartSessionAtLaunch, v => _s.StartSessionAtLaunch = v),
-            CheckBox("Start session after waking from sleep", _s.StartSessionAfterWake, v => _s.StartSessionAfterWake = v),
-            CheckBox("Show time left on the tray icon", _s.ShowTimeRemainingInTray, v => _s.ShowTimeRemainingInTray = v),
-            CheckBox("Diagnostic logging (writes debug.log to the settings folder)", _s.DebugMode, v => _s.DebugMode = Log.Enabled = v)));
+            Heading("Startup"),
+            CheckBox("Start WakeKeeper when I sign in to Windows", _s.LaunchAtLogin, v => _s.LaunchAtLogin = v),
+            CheckBox("Keep the PC awake as soon as WakeKeeper starts", _s.StartSessionAtLaunch, v => _s.StartSessionAtLaunch = v),
+            CheckBox("Keep it awake again after the PC wakes from sleep", _s.StartSessionAfterWake, v => _s.StartSessionAfterWake = v),
+            Heading("Notifications"),
+            CheckBox("Tell me when keeping awake starts or stops", _s.NotifyOnStartEnd, v => _s.NotifyOnStartEnd = v),
+            CheckBox("Tell me when an auto-start rule starts", _s.NotifyOnTriggerStart, v => _s.NotifyOnTriggerStart = v),
+            Number("Remind me it's still on every (minutes, 0 = never):", _s.ReminderEveryMinutes, 0, 1440, v => _s.ReminderEveryMinutes = v),
+            CheckBox("Show the time left on the taskbar icon", _s.ShowTimeRemainingInTray, v => _s.ShowTimeRemainingInTray = v),
+            Heading("Troubleshooting"),
+            CheckBox("Diagnostic logging", _s.DebugMode, v => _s.DebugMode = Log.Enabled = v),
+            openLog,
+            new Label
+            {
+                Text = $"{_s.TotalSessions:N0} sessions so far · {_s.TotalAwakeHours:N1} hours kept awake",
+                AutoSize = true, ForeColor = SystemColors.GrayText, Margin = new Padding(3, 14, 3, 3),
+            }));
 
         tabs.TabPages.Add(Page("Sessions",
+            Heading("Defaults"),
             Number("Default length (minutes, 0 = until I stop it):", _s.DefaultDurationMinutes, 0, 10080, v => _s.DefaultDurationMinutes = v),
             CheckBox("Let the screen turn off", _s.AllowDisplaySleep, v => _s.AllowDisplaySleep = v),
             CheckBox("Allow screen saver when I'm idle", _s.AllowScreenSaver, v => _s.AllowScreenSaver = v),
             Number("    after (minutes of inactivity):", _s.AllowScreenSaverAfterMinutes, 1, 1440, v => _s.AllowScreenSaverAfterMinutes = v),
-            CheckBox("Keep awake when laptop lid is closed (changes the power plan's lid action during sessions)", _s.PreventSleepWhenLidClosed, v => _s.PreventSleepWhenLidClosed = v),
+            CheckBox("Keep running with the lid closed (changes the lid action only during sessions)", _s.PreventSleepWhenLidClosed, v => _s.PreventSleepWhenLidClosed = v),
+            Heading("Battery and power"),
             CheckBox("End session if battery charge is below:", _s.EndSessionOnLowBattery, v => _s.EndSessionOnLowBattery = v),
             Number("    Battery threshold (%):", _s.LowBatteryPercent, 1, 99, v => _s.LowBatteryPercent = v),
             CheckBox("    Ignore battery level when plugged in", _s.IgnoreBatteryIfPluggedIn, v => _s.IgnoreBatteryIfPluggedIn = v),
@@ -36,27 +55,18 @@ public sealed class SettingsForm : Form
             CheckBox("    Start a new session if reconnected", _s.RestartSessionIfReplugged, v => _s.RestartSessionIfReplugged = v),
             CheckBox("End session when the PC is put to sleep", _s.EndSessionOnForcedSleep, v => _s.EndSessionOnForcedSleep = v)));
 
-        tabs.TabPages.Add(Page("When Idle",
+        tabs.TabPages.Add(Page("When idle",
             CheckBox("Nudge the mouse when idle (stay Available in chat apps)", _s.MoveCursorWhenIdle, v => _s.MoveCursorWhenIdle = v),
             Number("    after (minutes of inactivity):", _s.MoveCursorAfterMinutes, 1, 120, v => _s.MoveCursorAfterMinutes = v),
             CheckBox("Lock the PC when idle", _s.LockScreenWhenIdle, v => _s.LockScreenWhenIdle = v),
             Number("    after (minutes of inactivity):", _s.LockScreenAfterMinutes, 1, 240, v => _s.LockScreenAfterMinutes = v)));
 
-        tabs.TabPages.Add(Page("Notifications",
-            CheckBox("Notify when a session starts or ends", _s.NotifyOnStartEnd, v => _s.NotifyOnStartEnd = v),
-            CheckBox("Notify when an auto-start rule starts a session", _s.NotifyOnTriggerStart, v => _s.NotifyOnTriggerStart = v),
-            Number("Remind me every (minutes, 0 = off):", _s.ReminderEveryMinutes, 0, 1440, v => _s.ReminderEveryMinutes = v)));
-
         tabs.TabPages.Add(TriggersPage());
         tabs.TabPages.Add(DrivesPage());
-        tabs.TabPages.Add(Page("Hot Keys",
+        tabs.TabPages.Add(Page("Hot keys",
             HotkeyBox("Start / end session:", _s.StartEndHotkey, k => _s.StartEndHotkey = k),
             HotkeyBox("Toggle screen can turn off:", _s.ToggleDisplaySleepHotkey, k => _s.ToggleDisplaySleepHotkey = k),
             new Label { Text = "Click a box and press a key combination. Backspace clears it.", AutoSize = true, ForeColor = SystemColors.GrayText }));
-        tabs.TabPages.Add(Page("Statistics",
-            new Label { Text = $"Sessions started: {_s.TotalSessions}", AutoSize = true },
-            new Label { Text = $"Time kept awake: {_s.TotalAwakeHours:0.0} hours", AutoSize = true }));
-
         Controls.Add(tabs);
     }
 
@@ -66,15 +76,20 @@ public sealed class SettingsForm : Form
         {
             Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true, Padding = new Padding(10),
         };
-        foreach (var c in controls) { c.Margin = new Padding(3, 4, 3, 4); flow.Controls.Add(c); }
+        foreach (var c in controls) { if (c.Margin == new Padding(3)) c.Margin = new Padding(3, 4, 3, 4); flow.Controls.Add(c); }
         var page = new TabPage(title);
         page.Controls.Add(flow);
         return page;
     }
 
+    private static Label Heading(string text) => new()
+    {
+        Text = text, AutoSize = true, Font = new Font("Segoe UI Semibold", 10f), Margin = new Padding(3, 10, 3, 2),
+    };
+
     private static CheckBox CheckBox(string text, bool value, Action<bool> set)
     {
-        var cb = new CheckBox { Text = text, Checked = value, AutoSize = true, MaximumSize = new Size(500, 0) };
+        var cb = new CheckBox { Text = text, Checked = value, AutoSize = true, MaximumSize = new Size(540, 0) };
         cb.CheckedChanged += (_, _) => set(cb.Checked);
         return cb;
     }
@@ -128,7 +143,7 @@ public sealed class SettingsForm : Form
         var remove = new Button { Text = "Remove", AutoSize = true };
         remove.Click += (_, _) => { if (list.SelectedItem is Trigger t) { _s.Triggers.Remove(t); Reload(); } };
 
-        return Page("Auto-Start",
+        return Page("Auto-start",
             CheckBox("Enable auto-start rules", _s.TriggersEnabled, v => _s.TriggersEnabled = v),
             new Label { Text = "A rule starts a session automatically while all of its conditions are true.", AutoSize = true, MaximumSize = new Size(500, 0) },
             list,

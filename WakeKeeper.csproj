@@ -9,7 +9,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>WakeKeeper</AssemblyName>
     <RootNamespace>WakeKeeper</RootNamespace>
-    <Version>1.2.1</Version>
+    <Version>1.3.0</Version>
     <Product>WakeKeeper</Product>
     <Company>WakeKeeper</Company>
     <Description>Keeps your Windows PC awake</Description>
@@ -17,5 +17,10 @@
     <ApplicationIcon>assets\WakeKeeper.ico</ApplicationIcon>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="tests/**" />
+    <InternalsVisibleTo Include="WakeKeeper.Tests" />
+  </ItemGroup>
 
 </Project>

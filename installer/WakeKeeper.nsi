@@ -92,7 +92,7 @@ Section "${APP}" SecMain
 SectionEnd
 
 Section "Start when I sign in to Windows" SecStartup
-  WriteRegStr HKCU "${RUN_KEY}" "${APP}" '"$INSTDIR\${EXE}"'
+  WriteRegStr HKCU "${RUN_KEY}" "${APP}" '"$INSTDIR\${EXE}" --background'
 SectionEnd
 
 Section /o "Desktop shortcut" SecDesktop

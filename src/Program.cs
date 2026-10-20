@@ -16,13 +16,15 @@ internal static class Program
         using var mutex = new Mutex(initiallyOwned: true, @"Local\WakeKeeper.SingleInstance", out bool first);
         if (!first)
         {
+            // Already running (maybe hidden behind ^ in the taskbar): bring its window to the front instead.
             InstanceSignals.Send(InstanceSignals.ShowName);
             return;
         }
 
         ApplicationConfiguration.Initialize();
         using var signals = new InstanceSignals();
-        Application.Run(new TrayApp(signals));
+        bool background = args.Contains("--background", StringComparer.OrdinalIgnoreCase);
+        Application.Run(new TrayApp(signals, showWindow: !background));
     }
 }
 

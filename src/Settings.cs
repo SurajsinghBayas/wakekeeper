@@ -92,6 +92,7 @@ public sealed class Settings
 
     // Support
     public bool DebugMode { get; set; }
+    public bool SeenTrayHint { get; set; }
 
     // Triggers
     public bool TriggersEnabled { get; set; } = true;
