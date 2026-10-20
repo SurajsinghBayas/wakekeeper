@@ -1,5 +1,7 @@
 # WakeKeeper
 
+![WakeKeeper: close the lid, your agents keep working](assets/banner.png)
+
 Keep your Windows PC awake while AI agents, builds, downloads and backups run, even with the laptop lid closed.
 
 **Download:** [WakeKeeper-Setup.exe](https://github.com/SurajsinghBayas/wakekeeper/releases/latest/download/WakeKeeper-Setup.exe) · [Portable .zip](https://github.com/SurajsinghBayas/wakekeeper/releases/latest/download/WakeKeeper-Portable.zip) · Windows 10 and 11, 64-bit
