@@ -15,8 +15,8 @@ const features = [
     tech: "*.crdownload, *.part",
   },
   {
-    name: "Triggers",
-    body: "Rules that start a session automatically when every condition is true: app running, plugged in, battery level, Wi-Fi network, schedule, idle time, CPU load, or a drive being connected.",
+    name: "Auto-start rules",
+    body: "Start a session automatically when every condition is true: app running, plugged in, battery level, Wi-Fi network, schedule, idle time, CPU load, or a drive being connected.",
     tech: "Evaluated every 5 s",
   },
   {
@@ -35,13 +35,13 @@ const features = [
     tech: "SendInput, LockWorkStation",
   },
   {
-    name: "Drive Alive",
+    name: "Keep drives spinning",
     body: "Stops external drives from spinning down by writing a tiny hidden file to them at an interval you choose.",
-    tech: ".wakekeeper-drivealive",
+    tech: ".wakekeeper-keepalive",
   },
   {
     name: "Global hot keys",
-    body: "Ctrl + Alt + A starts or ends a session from anywhere. You can set another key to toggle display sleep.",
+    body: "Ctrl + Alt + A starts or ends a session from anywhere. You can set another key to let the screen turn off.",
     tech: "RegisterHotKey",
   },
 ];

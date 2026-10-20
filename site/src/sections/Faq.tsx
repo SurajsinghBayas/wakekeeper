@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 const faqs = [
   {
     q: "Does it work with Claude Code, Codex, Cursor and other agents?",
-    a: "Yes. WakeKeeper doesn't need to know what the agent is. It keeps Windows awake, so anything running on the PC keeps running. The neatest setup is While app is running with the terminal or editor the agent lives in.",
+    a: "Yes. WakeKeeper doesn't need to know what the agent is. It keeps Windows awake, so anything running on the PC keeps running. The neatest setup is While an app is open with the terminal or editor the agent lives in.",
   },
   {
     q: "Is it really safe to close the lid?",

@@ -235,8 +235,8 @@ export function TrayDemo() {
                     Keep running with lid closed
                   </Item>
                   <Divider />
-                  <Item onClick={() => start("Indefinitely", null)} onHover={() => setSubmenu(null)}>
-                    Indefinitely
+                  <Item onClick={() => start("Until you stop it", null)} onHover={() => setSubmenu(null)}>
+                    Until I stop it
                   </Item>
                   {(["minutes", "hours", "apps"] as const).map((key) => (
                     <Item
@@ -246,15 +246,15 @@ export function TrayDemo() {
                       onHover={(el) => openSub(key, el)}
                       onClick={(el) => (submenu?.key === key ? setSubmenu(null) : openSub(key, el))}
                     >
-                      {key === "minutes" ? "Minutes" : key === "hours" ? "Hours" : "While app is running"}
+                      {key === "minutes" ? "Minutes" : key === "hours" ? "Hours" : "While an app is open"}
                     </Item>
                   ))}
-                  <Item onClick={() => start("While a file is downloading", null)} onHover={() => setSubmenu(null)}>
-                    While file is downloading
+                  <Item onClick={() => start("Until downloads finish", null)} onHover={() => setSubmenu(null)}>
+                    Until downloads finish
                   </Item>
                   <Divider />
                   <Item checked={displaySleep} onClick={() => setDisplaySleep((v) => !v)} onHover={() => setSubmenu(null)}>
-                    Allow display to sleep
+                    Let the screen turn off
                   </Item>
                 </div>
               </div>

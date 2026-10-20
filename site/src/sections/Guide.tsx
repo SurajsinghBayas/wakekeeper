@@ -25,7 +25,7 @@ const tabs = [
   { value: "install", label: "Install" },
   { value: "use", label: "Everyday use" },
   { value: "agents", label: "Agents & lid closed" },
-  { value: "triggers", label: "Triggers" },
+  { value: "triggers", label: "Auto-start rules" },
   { value: "remove", label: "Uninstall" },
 ];
 
@@ -95,8 +95,8 @@ export function Guide() {
               </Step>
               <Step title="Right-click for timers and options">
                 <p>
-                  Pick minutes or hours, <i>Other time/until</i> for a clock time, <i>While app is running</i>, or{" "}
-                  <i>While file is downloading</i>. Running sessions can be extended from the same menu.
+                  Pick minutes or hours, <i>Custom time</i> for any length or a clock time, <i>While an app is open</i>, or{" "}
+                  <i>Until downloads finish</i>. Add time to a running session from the same menu.
                 </p>
               </Step>
               <Step title="Or use the keyboard">
@@ -107,8 +107,8 @@ export function Guide() {
               </Step>
               <Step title="Fine-tune in Settings">
                 <p>
-                  Right-click the cup › <B>Settings</B> for default duration, battery rules, notifications, cursor nudging and
-                  Drive Alive.
+                  Right-click the cup › <B>Settings</B> for default duration, battery rules, notifications, mouse nudging and
+                  keeping drives spinning.
                 </p>
               </Step>
             </Steps>
@@ -119,7 +119,7 @@ export function Guide() {
               <Step title="Start your agent as usual">
                 <p>Claude Code, Codex, Aider or a Cursor background agent in Windows Terminal, VS Code or any other app.</p>
               </Step>
-              <Step title="Right-click the cup › While app is running › pick that app">
+              <Step title="Right-click the cup › While an app is open › pick that app">
                 <p>WakeKeeper keeps the PC awake until you close that window, then lets it sleep again on its own.</p>
               </Step>
               <Step title="Tick “Keep running with lid closed”">
@@ -139,19 +139,19 @@ export function Guide() {
 
           <Tabs.Panel value="triggers" className="max-w-2xl pt-10">
             <Steps>
-              <Step title="Right-click the cup › Settings › Triggers › Add">
-                <p>Give the Trigger a name, for example “Overnight agent runs”.</p>
+              <Step title="Right-click the cup › Settings › Auto-Start › Add">
+                <p>Give the rule a name, for example “Overnight agent runs”.</p>
               </Step>
               <Step title="Add conditions">
                 <p>
                   Combine app running, power adapter connected, battery level, Wi-Fi network, a schedule, idle time, CPU load or a
-                  connected drive. Every condition must be true for the Trigger to start a session.
+                  connected drive. Every condition must be true for the rule to start a session.
                 </p>
               </Step>
               <Step title="Close Settings">
                 <p>
-                  WakeKeeper checks your Triggers every few seconds. If you stop a Trigger session by hand, it offers to pause
-                  Triggers for an hour.
+                  WakeKeeper checks your rules every few seconds. If you stop a rule's session by hand, it offers to pause
+                  rules for an hour.
                 </p>
               </Step>
             </Steps>

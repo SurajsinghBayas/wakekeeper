@@ -16,11 +16,11 @@ public sealed class Session
 
     public string Describe() => Kind switch
     {
-        SessionKind.Indefinite => "Indefinitely",
+        SessionKind.Indefinite => "Until you stop it",
         SessionKind.Duration or SessionKind.Until => $"Until {(Ends!.Value.Date == DateTime.Today ? $"{Ends:t}" : $"{Ends:ddd t}")} ({Format(Remaining!.Value)} left)",
         SessionKind.WhileApp => $"While {AppName} is running",
         SessionKind.WhileDownloading => "While a file is downloading",
-        SessionKind.Trigger => $"Trigger: {Trigger!.Name}",
+        SessionKind.Trigger => $"Auto-start: {Trigger!.Name}",
         _ => Kind.ToString(),
     };
 
@@ -59,7 +59,7 @@ public sealed class SessionManager
         ApplyExecutionState();
         Log.Write($"Session started: {session.Kind}");
         bool notify = session.Kind == SessionKind.Trigger ? _settings.NotifyOnTriggerStart : _settings.NotifyOnStartEnd;
-        if (notify) Notify?.Invoke("Session started", session.Describe());
+        if (notify) Notify?.Invoke("Keeping your PC awake", session.Describe());
         Changed?.Invoke();
     }
 
@@ -77,7 +77,7 @@ public sealed class SessionManager
         Native.SetThreadExecutionState(Native.ExecutionState.Continuous);
         LidControl.Restore();
         Log.Write($"Session ended: {s.Kind}");
-        if (!silent && _settings.NotifyOnStartEnd) Notify?.Invoke("Session ended", "Your PC can sleep normally again.");
+        if (!silent && _settings.NotifyOnStartEnd) Notify?.Invoke("Your PC can sleep again", "WakeKeeper stopped keeping it awake.");
         Changed?.Invoke();
         try { _settings.Save(); } catch (IOException) { }
     }
@@ -162,7 +162,7 @@ public sealed class SessionManager
             bool unplug = _endedByUnplug;
             End(silent: true);
             _endedByUnplug = unplug;
-            if (_settings.NotifyOnStartEnd) Notify?.Invoke("Session ended", reason);
+            if (_settings.NotifyOnStartEnd) Notify?.Invoke("Your PC can sleep again", reason);
             return;
         }
 

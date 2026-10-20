@@ -13,7 +13,7 @@ internal sealed class TrayApp : ApplicationContext
     private readonly Settings _settings;
     private readonly SessionManager _sessions;
     private readonly TriggerEngine _triggers;
-    private readonly DriveAlive _driveAlive;
+    private readonly DriveSpinner _driveSpinner;
     private readonly NotifyIcon _tray;
     private readonly Icon _activeIcon, _inactiveIcon;
     private readonly System.Windows.Forms.Timer _timer = new() { Interval = 1000 };
@@ -34,7 +34,7 @@ internal sealed class TrayApp : ApplicationContext
         LidControl.Restore(); // recover from a crash while lid-closed mode was active
         _sessions = new SessionManager(_settings);
         _triggers = new TriggerEngine(_settings, _sessions);
-        _driveAlive = new DriveAlive(_settings, _sessions);
+        _driveSpinner = new DriveSpinner(_settings, _sessions);
 
         _activeIcon = DrawIcon(active: true);
         _inactiveIcon = DrawIcon(active: false);
@@ -85,7 +85,7 @@ internal sealed class TrayApp : ApplicationContext
     {
         _sessions.Tick();
         if (++_tickCount % 5 == 0) _triggers.Tick();
-        _driveAlive.Tick();
+        _driveSpinner.Tick();
         if (_sessions.Current?.Remaining != null) UpdateTray();
     }
 
@@ -100,7 +100,7 @@ internal sealed class TrayApp : ApplicationContext
         // Ending a Trigger session would immediately restart it, so offer to pause Triggers.
         if (_sessions.Current is { Kind: SessionKind.Trigger })
         {
-            var r = MessageBox.Show("This session was started by a Trigger. Pause all Triggers for 1 hour?",
+            var r = MessageBox.Show("This session was started by an auto-start rule. Pause all rules for 1 hour?",
                 "WakeKeeper", MessageBoxButtons.OKCancel, MessageBoxIcon.Question);
             if (r != DialogResult.OK) return;
             _triggers.PauseFor(TimeSpan.FromHours(1));
@@ -166,10 +166,10 @@ internal sealed class TrayApp : ApplicationContext
         if (s != null)
         {
             menu.Items.Add(new ToolStripMenuItem(s.Describe()) { Enabled = false });
-            menu.Items.Add("&End Session", null, (_, _) => EndSession());
+            menu.Items.Add("&End session", null, (_, _) => EndSession());
             if (s.Kind is SessionKind.Duration or SessionKind.Until)
             {
-                var extend = new ToolStripMenuItem("Extend Session By");
+                var extend = new ToolStripMenuItem("Add time");
                 foreach (var m in new[] { 15, 30, 60, 120 })
                     extend.DropDownItems.Add(FormatMinutes(m), null, (_, _) => _sessions.Extend(m));
                 menu.Items.Add(extend);
@@ -184,21 +184,21 @@ internal sealed class TrayApp : ApplicationContext
             menu.Items.Add(Check("Keep running with lid closed", _settings.PreventSleepWhenLidClosed, SetLidClosedMode));
 
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add(new ToolStripMenuItem("Start New Session:") { Enabled = false });
-        menu.Items.Add(new ToolStripMenuItem("&Indefinitely", null, (_, _) => _sessions.Start(new Session { Kind = SessionKind.Indefinite }))
+        menu.Items.Add(new ToolStripMenuItem("Keep awake:") { Enabled = false });
+        menu.Items.Add(new ToolStripMenuItem("&Until I stop it", null, (_, _) => _sessions.Start(new Session { Kind = SessionKind.Indefinite }))
         {
             ShortcutKeyDisplayString = _settings.StartEndHotkey.IsSet ? _settings.StartEndHotkey.ToString() : null,
         });
         menu.Items.Add(DurationMenu("&Minutes", MinuteGroups, 1));
         menu.Items.Add(DurationMenu("&Hours", HourGroups, 60));
-        menu.Items.Add("&Other Time/Until...", null, (_, _) => PromptTime());
+        menu.Items.Add("&Custom time...", null, (_, _) => PromptTime());
 
-        var apps = new ToolStripMenuItem("While &App is Running");
+        var apps = new ToolStripMenuItem("While an &app is open");
         foreach (var name in SystemProbe.WindowedProcessNames())
             apps.DropDownItems.Add(name, null, (_, _) => _sessions.Start(new Session { Kind = SessionKind.WhileApp, AppName = name }));
         if (apps.DropDownItems.Count == 0) apps.Enabled = false;
         menu.Items.Add(apps);
-        menu.Items.Add("While &File is Downloading...", null, (_, _) => _sessions.Start(new Session { Kind = SessionKind.WhileDownloading }));
+        menu.Items.Add("Until &downloads finish", null, (_, _) => _sessions.Start(new Session { Kind = SessionKind.WhileDownloading }));
 
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(QuickSettingsMenu());
@@ -227,36 +227,36 @@ internal sealed class TrayApp : ApplicationContext
         return item;
     }
 
-    /// <summary>Quick Settings mirror the saved Settings (the defaults for new sessions), not just the current session.</summary>
+    /// <summary>Quick Options mirror the saved Settings (the defaults for new sessions), not just the current session.</summary>
     private ToolStripMenuItem QuickSettingsMenu()
     {
-        var quick = new ToolStripMenuItem("Quick Settings");
+        var quick = new ToolStripMenuItem("Quick Options");
         var items = quick.DropDownItems;
-        items.Add(new ToolStripMenuItem("These reflect your saved Settings,\nnot necessarily the current session.") { Enabled = false });
+        items.Add(new ToolStripMenuItem("Saved defaults for new sessions.\nChanges apply to the running one too.") { Enabled = false });
 
         items.Add(new ToolStripSeparator());
-        items.Add(Header("Session Defaults"));
-        items.Add(Check("Allow display sleep", _settings.AllowDisplaySleep, v => _sessions.SetDisplaySleep(v)));
+        items.Add(Header("New sessions"));
+        items.Add(Check("Let the screen turn off", _settings.AllowDisplaySleep, v => _sessions.SetDisplaySleep(v)));
         if (SystemProbe.HasBattery)
             items.Add(Check("Keep running with lid closed", _settings.PreventSleepWhenLidClosed, SetLidClosedMode));
-        items.Add(Check($"Allow screen saver after {_settings.AllowScreenSaverAfterMinutes}m of inactivity", _settings.AllowScreenSaver, v => _settings.AllowScreenSaver = v));
+        items.Add(Check($"Allow screen saver when idle {_settings.AllowScreenSaverAfterMinutes} min", _settings.AllowScreenSaver, v => _settings.AllowScreenSaver = v));
         if (SystemProbe.HasBattery)
         {
-            items.Add(Check($"End session if battery is below {_settings.LowBatteryPercent}%", _settings.EndSessionOnLowBattery, v => _settings.EndSessionOnLowBattery = v));
-            items.Add(Check("End session if not connected to power", _settings.EndSessionIfUnplugged, v => _settings.EndSessionIfUnplugged = v));
+            items.Add(Check($"Stop below {_settings.LowBatteryPercent}% battery", _settings.EndSessionOnLowBattery, v => _settings.EndSessionOnLowBattery = v));
+            items.Add(Check("Stop when unplugged", _settings.EndSessionIfUnplugged, v => _settings.EndSessionIfUnplugged = v));
         }
 
         items.Add(new ToolStripSeparator());
-        items.Add(Header("System Control"));
-        items.Add(Check($"Lock screen after {_settings.LockScreenAfterMinutes}m of inactivity", _settings.LockScreenWhenIdle, v => _settings.LockScreenWhenIdle = v));
-        items.Add(Check($"Move cursor after {_settings.MoveCursorAfterMinutes}m of inactivity", _settings.MoveCursorWhenIdle, v => _settings.MoveCursorWhenIdle = v));
+        items.Add(Header("When I'm away"));
+        items.Add(Check($"Lock the PC when idle {_settings.LockScreenAfterMinutes} min", _settings.LockScreenWhenIdle, v => _settings.LockScreenWhenIdle = v));
+        items.Add(Check($"Nudge the mouse when idle {_settings.MoveCursorAfterMinutes} min", _settings.MoveCursorWhenIdle, v => _settings.MoveCursorWhenIdle = v));
 
         items.Add(new ToolStripSeparator());
-        items.Add(Header("Other"));
-        var triggers = _settings.TriggersEnabled && _triggers.Paused ? "Enable Triggers (paused)" : "Enable Triggers";
+        items.Add(Header("More"));
+        var triggers = _settings.TriggersEnabled && _triggers.Paused ? "Auto-start rules (paused)" : "Auto-start rules";
         items.Add(Check(triggers, _settings.TriggersEnabled, v => _settings.TriggersEnabled = v));
-        items.Add(Check("Enable Drive Alive", _settings.DriveAliveEnabled, v => _settings.DriveAliveEnabled = v));
-        items.Add(Check("Show session time remaining on tray icon", _settings.ShowTimeRemainingInTray, v =>
+        items.Add(Check("Keep drives spinning", _settings.SpinDrivesEnabled, v => _settings.SpinDrivesEnabled = v));
+        items.Add(Check("Show time left on the tray icon", _settings.ShowTimeRemainingInTray, v =>
         {
             _settings.ShowTimeRemainingInTray = v;
             UpdateTray();
@@ -266,26 +266,27 @@ internal sealed class TrayApp : ApplicationContext
 
     private ToolStripMenuItem SupportMenu()
     {
-        var support = new ToolStripMenuItem("Feedback && Support");
+        var support = new ToolStripMenuItem("Help && Feedback");
         var items = support.DropDownItems;
-        items.Add("Troubleshooting && FAQs", null, (_, _) => Links.Open(Links.Help));
-        items.Add("Contact Support", null, (_, _) => Links.Open(Links.Contact));
-        items.Add(Check("Debug Mode", _settings.DebugMode, v =>
+        items.Add("Troubleshooting guide", null, (_, _) => Links.Open(Links.Help));
+        items.Add("Email support", null, (_, _) => Links.Open(Links.Email));
+        items.Add("Report a bug", null, (_, _) => Links.Open(Links.Contact));
+        items.Add(Check("Diagnostic logging", _settings.DebugMode, v =>
         {
             _settings.DebugMode = Log.Enabled = v;
             if (v) Log.Write($"Debug mode on, WakeKeeper {Links.Version}, {Environment.OSVersion}");
         }));
-        items.Add(new ToolStripMenuItem("Open Debug Log", null, (_, _) => Links.Open(Log.FilePath)) { Enabled = File.Exists(Log.FilePath) });
+        items.Add(new ToolStripMenuItem("Open diagnostic log", null, (_, _) => Links.Open(Log.FilePath)) { Enabled = File.Exists(Log.FilePath) });
 
         items.Add(new ToolStripSeparator());
         items.Add("Restore Windows Power Settings...", null, (_, _) => RestorePowerSettings());
         items.Add("Uninstall WakeKeeper...", null, (_, _) => Links.Open("ms-settings:appsfeatures"));
 
         items.Add(new ToolStripSeparator());
-        items.Add("Star WakeKeeper on GitHub", null, (_, _) => Links.Open(Links.Star));
+        items.Add("Star on GitHub", null, (_, _) => Links.Open(Links.Star));
 
         items.Add(new ToolStripSeparator());
-        items.Add("Contribute to WakeKeeper's Development", null, (_, _) => Links.Open(Links.Contribute));
+        items.Add("View source code", null, (_, _) => Links.Open(Links.Contribute));
         return support;
     }
 

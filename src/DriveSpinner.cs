@@ -2,14 +2,14 @@ namespace WakeKeeper;
 
 /// <summary>Keeps external drives spinning by touching a small hidden file on each one at an interval,
 /// so they never spin down mid-task.</summary>
-public sealed class DriveAlive
+public sealed class DriveSpinner
 {
-    private const string FileName = ".wakekeeper-drivealive";
+    private const string FileName = ".wakekeeper-keepalive";
     private readonly Settings _settings;
     private readonly SessionManager _sessions;
     private DateTime _last = DateTime.MinValue;
 
-    public DriveAlive(Settings settings, SessionManager sessions)
+    public DriveSpinner(Settings settings, SessionManager sessions)
     {
         _settings = settings;
         _sessions = sessions;
@@ -17,12 +17,12 @@ public sealed class DriveAlive
 
     public void Tick()
     {
-        if (!_settings.DriveAliveEnabled || _settings.DriveAliveDrives.Count == 0) return;
-        if (_settings.DriveAliveOnlyDuringSession && _sessions.Current == null) return;
-        if (DateTime.Now - _last < TimeSpan.FromSeconds(Math.Max(10, _settings.DriveAliveIntervalSeconds))) return;
+        if (!_settings.SpinDrivesEnabled || _settings.SpinDrives.Count == 0) return;
+        if (_settings.SpinOnlyDuringSession && _sessions.Current == null) return;
+        if (DateTime.Now - _last < TimeSpan.FromSeconds(Math.Max(10, _settings.SpinIntervalSeconds))) return;
         _last = DateTime.Now;
 
-        foreach (var root in _settings.DriveAliveDrives)
+        foreach (var root in _settings.SpinDrives)
         {
             var path = Path.Combine(SystemProbe.NormalizeRoot(root), FileName);
             try
@@ -39,11 +39,11 @@ public sealed class DriveAlive
                 }
                 File.SetAttributes(path, FileAttributes.Hidden);
             }
-            catch (Exception ex) { Log.Write($"Drive Alive write to {path} failed: {ex.Message}"); }
+            catch (Exception ex) { Log.Write($"Drive keep-alive write to {path} failed: {ex.Message}"); }
         }
     }
 
-    /// <summary>Removable and fixed non-system drives that are candidates for Drive Alive.</summary>
+    /// <summary>Removable and fixed non-system drives that are candidates for keeping awake.</summary>
     public static IEnumerable<DriveInfo> CandidateDrives()
     {
         var system = Path.GetPathRoot(Environment.SystemDirectory);

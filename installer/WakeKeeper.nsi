@@ -114,6 +114,6 @@ Section "Uninstall"
   Delete "$DESKTOP\${APP}.lnk"
   DeleteRegValue HKCU "${RUN_KEY}" "${APP}"
   DeleteRegKey HKCU "${UNINST_KEY}"
-  MessageBox MB_YESNO|MB_ICONQUESTION "Also remove your ${APP} settings and Triggers?" /SD IDNO IDNO +2
+  MessageBox MB_YESNO|MB_ICONQUESTION "Also remove your ${APP} settings and auto-start rules?" /SD IDNO IDNO +2
     RMDir /r "$APPDATA\${APP}"
 SectionEnd

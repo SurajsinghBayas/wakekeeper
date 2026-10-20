@@ -41,7 +41,7 @@ internal static class SystemProbe
         catch (ArgumentException) { return false; }
     }
 
-    /// <summary>Distinct names of processes that own a visible window, for the "While App is Running" menu.</summary>
+    /// <summary>Distinct names of processes that own a visible window, for the "While an app is open" menu.</summary>
     public static List<string> WindowedProcessNames()
     {
         var names = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);

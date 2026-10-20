@@ -46,7 +46,7 @@ internal static class Native
     [DllImport("user32.dll", SetLastError = true)]
     private static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
 
-    /// <summary>Nudge the cursor by one pixel and back ("Move cursor when idle").</summary>
+    /// <summary>Nudge the cursor by one pixel and back ("Nudge the mouse when idle").</summary>
     public static void JiggleMouse()
     {
         var inputs = new[]

@@ -9,6 +9,7 @@ internal static class Links
     public const string Repo = "https://github.com/SurajsinghBayas/wakekeeper";
     public const string Help = Repo + "#troubleshooting";
     public const string Contact = Repo + "/issues/new";
+    public const string Email = "mailto:surajyou45@gmail.com?subject=WakeKeeper%20support";
     public const string Star = Repo + "/stargazers";
     public const string Contribute = Repo + "#building";
 
@@ -28,7 +29,7 @@ internal static class Links
     }
 }
 
-/// <summary>"Other Time/Until": keep awake for a number of hours and minutes, or until a clock time.</summary>
+/// <summary>"Custom time": keep awake for a number of hours and minutes, or until a clock time.</summary>
 internal sealed class TimeDialog : Form
 {
     private readonly RadioButton _for = Segment("For"), _until = Segment("Until");
@@ -47,7 +48,7 @@ internal sealed class TimeDialog : Form
 
     public TimeDialog()
     {
-        Text = "Other Time/Until";
+        Text = "Custom time";
         FormBorderStyle = FormBorderStyle.FixedDialog;
         StartPosition = FormStartPosition.CenterScreen;
         MinimizeBox = MaximizeBox = false;

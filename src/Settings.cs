@@ -33,7 +33,7 @@ public sealed class Criterion
 
 public sealed class Trigger
 {
-    public string Name { get; set; } = "My Trigger";
+    public string Name { get; set; } = "My rule";
     public bool Enabled { get; set; } = true;
     public bool AllowDisplaySleep { get; set; }
     public List<Criterion> Criteria { get; set; } = new();
@@ -97,11 +97,11 @@ public sealed class Settings
     public bool TriggersEnabled { get; set; } = true;
     public List<Trigger> Triggers { get; set; } = new();
 
-    // Drive Alive
-    public bool DriveAliveEnabled { get; set; }
-    public List<string> DriveAliveDrives { get; set; } = new();
-    public int DriveAliveIntervalSeconds { get; set; } = 60;
-    public bool DriveAliveOnlyDuringSession { get; set; } = true;
+    // Keep drives spinning
+    public bool SpinDrivesEnabled { get; set; }
+    public List<string> SpinDrives { get; set; } = new();
+    public int SpinIntervalSeconds { get; set; } = 60;
+    public bool SpinOnlyDuringSession { get; set; } = true;
 
     // Hot keys
     public Hotkey StartEndHotkey { get; set; } = new() { Modifiers = Native.MOD_CONTROL | Native.MOD_ALT, Key = Keys.A };

@@ -20,13 +20,13 @@ public sealed class SettingsForm : Form
             CheckBox("Launch WakeKeeper at login", _s.LaunchAtLogin, v => _s.LaunchAtLogin = v),
             CheckBox("Start session when WakeKeeper launches", _s.StartSessionAtLaunch, v => _s.StartSessionAtLaunch = v),
             CheckBox("Start session after waking from sleep", _s.StartSessionAfterWake, v => _s.StartSessionAfterWake = v),
-            CheckBox("Show session time remaining on the tray icon", _s.ShowTimeRemainingInTray, v => _s.ShowTimeRemainingInTray = v),
-            CheckBox("Debug mode (writes debug.log to the settings folder)", _s.DebugMode, v => _s.DebugMode = Log.Enabled = v)));
+            CheckBox("Show time left on the tray icon", _s.ShowTimeRemainingInTray, v => _s.ShowTimeRemainingInTray = v),
+            CheckBox("Diagnostic logging (writes debug.log to the settings folder)", _s.DebugMode, v => _s.DebugMode = Log.Enabled = v)));
 
-        tabs.TabPages.Add(Page("Session Defaults",
-            Number("Default duration (minutes, 0 = indefinite):", _s.DefaultDurationMinutes, 0, 10080, v => _s.DefaultDurationMinutes = v),
-            CheckBox("Allow display sleep", _s.AllowDisplaySleep, v => _s.AllowDisplaySleep = v),
-            CheckBox("Allow screen saver after a period of inactivity", _s.AllowScreenSaver, v => _s.AllowScreenSaver = v),
+        tabs.TabPages.Add(Page("Sessions",
+            Number("Default length (minutes, 0 = until I stop it):", _s.DefaultDurationMinutes, 0, 10080, v => _s.DefaultDurationMinutes = v),
+            CheckBox("Let the screen turn off", _s.AllowDisplaySleep, v => _s.AllowDisplaySleep = v),
+            CheckBox("Allow screen saver when I'm idle", _s.AllowScreenSaver, v => _s.AllowScreenSaver = v),
             Number("    after (minutes of inactivity):", _s.AllowScreenSaverAfterMinutes, 1, 1440, v => _s.AllowScreenSaverAfterMinutes = v),
             CheckBox("Keep awake when laptop lid is closed (changes the power plan's lid action during sessions)", _s.PreventSleepWhenLidClosed, v => _s.PreventSleepWhenLidClosed = v),
             CheckBox("End session if battery charge is below:", _s.EndSessionOnLowBattery, v => _s.EndSessionOnLowBattery = v),
@@ -36,22 +36,22 @@ public sealed class SettingsForm : Form
             CheckBox("    Start a new session if reconnected", _s.RestartSessionIfReplugged, v => _s.RestartSessionIfReplugged = v),
             CheckBox("End session when the PC is put to sleep", _s.EndSessionOnForcedSleep, v => _s.EndSessionOnForcedSleep = v)));
 
-        tabs.TabPages.Add(Page("System Control",
-            CheckBox("Move cursor when idle", _s.MoveCursorWhenIdle, v => _s.MoveCursorWhenIdle = v),
+        tabs.TabPages.Add(Page("When Idle",
+            CheckBox("Nudge the mouse when idle (stay Available in chat apps)", _s.MoveCursorWhenIdle, v => _s.MoveCursorWhenIdle = v),
             Number("    after (minutes of inactivity):", _s.MoveCursorAfterMinutes, 1, 120, v => _s.MoveCursorAfterMinutes = v),
-            CheckBox("Lock screen when idle", _s.LockScreenWhenIdle, v => _s.LockScreenWhenIdle = v),
+            CheckBox("Lock the PC when idle", _s.LockScreenWhenIdle, v => _s.LockScreenWhenIdle = v),
             Number("    after (minutes of inactivity):", _s.LockScreenAfterMinutes, 1, 240, v => _s.LockScreenAfterMinutes = v)));
 
         tabs.TabPages.Add(Page("Notifications",
             CheckBox("Notify when a session starts or ends", _s.NotifyOnStartEnd, v => _s.NotifyOnStartEnd = v),
-            CheckBox("Notify when a Trigger starts a session", _s.NotifyOnTriggerStart, v => _s.NotifyOnTriggerStart = v),
+            CheckBox("Notify when an auto-start rule starts a session", _s.NotifyOnTriggerStart, v => _s.NotifyOnTriggerStart = v),
             Number("Remind me every (minutes, 0 = off):", _s.ReminderEveryMinutes, 0, 1440, v => _s.ReminderEveryMinutes = v)));
 
         tabs.TabPages.Add(TriggersPage());
-        tabs.TabPages.Add(DriveAlivePage());
+        tabs.TabPages.Add(DrivesPage());
         tabs.TabPages.Add(Page("Hot Keys",
             HotkeyBox("Start / end session:", _s.StartEndHotkey, k => _s.StartEndHotkey = k),
-            HotkeyBox("Toggle allow display sleep:", _s.ToggleDisplaySleepHotkey, k => _s.ToggleDisplaySleepHotkey = k),
+            HotkeyBox("Toggle screen can turn off:", _s.ToggleDisplaySleepHotkey, k => _s.ToggleDisplaySleepHotkey = k),
             new Label { Text = "Click a box and press a key combination. Backspace clears it.", AutoSize = true, ForeColor = SystemColors.GrayText }));
         tabs.TabPages.Add(Page("Statistics",
             new Label { Text = $"Sessions started: {_s.TotalSessions}", AutoSize = true },
@@ -128,32 +128,32 @@ public sealed class SettingsForm : Form
         var remove = new Button { Text = "Remove", AutoSize = true };
         remove.Click += (_, _) => { if (list.SelectedItem is Trigger t) { _s.Triggers.Remove(t); Reload(); } };
 
-        return Page("Triggers",
-            CheckBox("Enable Triggers", _s.TriggersEnabled, v => _s.TriggersEnabled = v),
-            new Label { Text = "A Trigger starts a session automatically while all of its criteria are true.", AutoSize = true, MaximumSize = new Size(500, 0) },
+        return Page("Auto-Start",
+            CheckBox("Enable auto-start rules", _s.TriggersEnabled, v => _s.TriggersEnabled = v),
+            new Label { Text = "A rule starts a session automatically while all of its conditions are true.", AutoSize = true, MaximumSize = new Size(500, 0) },
             list,
             Row(add, edit, remove));
     }
 
-    private TabPage DriveAlivePage()
+    private TabPage DrivesPage()
     {
         var list = new CheckedListBox { Width = 500, Height = 200, CheckOnClick = true };
-        foreach (var d in DriveAlive.CandidateDrives())
+        foreach (var d in DriveSpinner.CandidateDrives())
         {
             string label = $"{d.Name} {d.VolumeLabel} ({d.DriveType})";
-            list.Items.Add(label, _s.DriveAliveDrives.Contains(d.Name, StringComparer.OrdinalIgnoreCase));
+            list.Items.Add(label, _s.SpinDrives.Contains(d.Name, StringComparer.OrdinalIgnoreCase));
         }
         list.ItemCheck += (_, e) =>
         {
             var root = list.Items[e.Index].ToString()!.Split(' ')[0];
-            _s.DriveAliveDrives.RemoveAll(r => string.Equals(SystemProbe.NormalizeRoot(r), root, StringComparison.OrdinalIgnoreCase));
-            if (e.NewValue == CheckState.Checked) _s.DriveAliveDrives.Add(root);
+            _s.SpinDrives.RemoveAll(r => string.Equals(SystemProbe.NormalizeRoot(r), root, StringComparison.OrdinalIgnoreCase));
+            if (e.NewValue == CheckState.Checked) _s.SpinDrives.Add(root);
         };
 
-        return Page("Drive Alive",
-            CheckBox("Keep selected drives awake", _s.DriveAliveEnabled, v => _s.DriveAliveEnabled = v),
-            CheckBox("Only while a session is active", _s.DriveAliveOnlyDuringSession, v => _s.DriveAliveOnlyDuringSession = v),
-            Number("Write to drives every (seconds):", _s.DriveAliveIntervalSeconds, 10, 3600, v => _s.DriveAliveIntervalSeconds = v),
+        return Page("Drives",
+            CheckBox("Keep selected drives spinning", _s.SpinDrivesEnabled, v => _s.SpinDrivesEnabled = v),
+            CheckBox("Only while a session is active", _s.SpinOnlyDuringSession, v => _s.SpinOnlyDuringSession = v),
+            Number("Write to drives every (seconds):", _s.SpinIntervalSeconds, 10, 3600, v => _s.SpinIntervalSeconds = v),
             list);
     }
 }
@@ -163,7 +163,7 @@ internal sealed class TriggerEditor : Form
 {
     public TriggerEditor(Trigger trigger)
     {
-        Text = "Trigger";
+        Text = "Auto-start rule";
         Size = new Size(520, 480);
         StartPosition = FormStartPosition.CenterParent;
         Font = SystemFonts.MessageBoxFont;
@@ -171,7 +171,7 @@ internal sealed class TriggerEditor : Form
 
         var name = new TextBox { Text = trigger.Name, Width = 300 };
         var enabled = new CheckBox { Text = "Enabled", Checked = trigger.Enabled, AutoSize = true };
-        var displaySleep = new CheckBox { Text = "Allow display to sleep", Checked = trigger.AllowDisplaySleep, AutoSize = true };
+        var displaySleep = new CheckBox { Text = "Let the screen turn off", Checked = trigger.AllowDisplaySleep, AutoSize = true };
         var criteria = new ListBox { Width = 470, Height = 150 };
         void Reload() { criteria.Items.Clear(); foreach (var c in working) criteria.Items.Add(c); }
         Reload();
@@ -197,7 +197,7 @@ internal sealed class TriggerEditor : Form
         };
         kind.SelectedIndex = 0;
 
-        var addCrit = new Button { Text = "Add criterion", AutoSize = true };
+        var addCrit = new Button { Text = "Add condition", AutoSize = true };
         addCrit.Click += (_, _) =>
         {
             working.Add(new Criterion
@@ -207,13 +207,13 @@ internal sealed class TriggerEditor : Form
             });
             Reload();
         };
-        var removeCrit = new Button { Text = "Remove criterion", AutoSize = true };
+        var removeCrit = new Button { Text = "Remove condition", AutoSize = true };
         removeCrit.Click += (_, _) => { if (criteria.SelectedItem is Criterion c) { working.Remove(c); Reload(); } };
 
         var ok = new Button { Text = "OK", DialogResult = DialogResult.OK };
         ok.Click += (_, _) =>
         {
-            trigger.Name = string.IsNullOrWhiteSpace(name.Text) ? "Trigger" : name.Text.Trim();
+            trigger.Name = string.IsNullOrWhiteSpace(name.Text) ? "Rule" : name.Text.Trim();
             trigger.Enabled = enabled.Checked;
             trigger.AllowDisplaySleep = displaySleep.Checked;
             trigger.Criteria = working;
@@ -225,7 +225,7 @@ internal sealed class TriggerEditor : Form
         var flow = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, Padding = new Padding(10), AutoScroll = true };
         flow.Controls.Add(Row(new Label { Text = "Name:", AutoSize = true }, name));
         flow.Controls.Add(Row(enabled, displaySleep));
-        flow.Controls.Add(new Label { Text = "All criteria must be true:", AutoSize = true });
+        flow.Controls.Add(new Label { Text = "All conditions must be true:", AutoSize = true });
         flow.Controls.Add(criteria);
         flow.Controls.Add(Row(kind, text, number));
         flow.Controls.Add(Row(new Label { Text = "From", AutoSize = true }, from, new Label { Text = "To", AutoSize = true }, to, addCrit, removeCrit));

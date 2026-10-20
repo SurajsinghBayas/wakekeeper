@@ -19,10 +19,10 @@ export function Triggers() {
     <section className="border-b border-slate-200">
       <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:py-28">
         <div>
-          <p className="font-mono text-xs text-slate-500">Triggers</p>
+          <p className="font-mono text-xs text-slate-500">Auto-start rules</p>
           <h2 className="mt-3 text-3xl font-semibold text-balance">Set the rule once and forget about it.</h2>
           <p className="mt-4 max-w-md text-pretty text-slate-600">
-            A Trigger starts a session automatically while all of its conditions are true, and ends it as soon as one stops
+            A rule starts a session automatically while all of its conditions are true, and ends it as soon as one stops
             being true. Sessions you start yourself always take priority.
           </p>
           <p className="mt-4 max-w-md text-sm text-pretty text-slate-500">
@@ -33,7 +33,7 @@ export function Triggers() {
         <div className="silver rounded-2xl border border-slate-200 p-5 shadow-sm sm:p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs text-slate-500">Trigger</p>
+              <p className="text-xs text-slate-500">Rule</p>
               <p className="font-medium">Overnight agent runs</p>
             </div>
             <div
