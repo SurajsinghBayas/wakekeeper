@@ -83,7 +83,7 @@ dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true 
   -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -o out/full
 
 # Setup wizard (makensis 3.x)
-mkdir -p out/release && (cd installer && makensis -DVERSION=1.2.1 WakeKeeper.nsi)
+mkdir -p out/release && (cd installer && makensis -DVERSION=1.3.0 WakeKeeper.nsi)
 
 # Website
 cd site && pnpm install && pnpm build
@@ -91,7 +91,16 @@ cd site && pnpm install && pnpm build
 
 ## Releasing
 
-Upload `WakeKeeper-Setup.exe` and `WakeKeeper-Portable.zip` to a GitHub release with exactly those names. The website links to `releases/latest/download/…`, so it serves the new version without a redeploy. Update the version and SHA-256 values in `site/src/lib/release.ts`.
+Push a tag such as `v1.3.0`. GitHub Actions builds the app and setup wizard on Windows, installs it to check it works, and publishes the release with `WakeKeeper-Setup.exe` and `WakeKeeper-Portable.zip`. The website links to `releases/latest/download/…`, so it serves the new version straight away; update the version and SHA-256 values in `site/src/lib/release.ts` afterwards.
+
+## Testing
+
+Every pull request runs the Windows test suite on Windows Server 2022 and 2025 (the Windows 10 and 11 code bases):
+
+- `tests/WakeKeeper.Tests` runs the real app and checks sessions, the power requests Windows sees (`powercfg /requests`), timers, app and download sessions, the hot key, lid-closed mode and crash recovery, and saves screenshots of every window and menu.
+- `tests/lifecycle.ps1` installs the setup wizard and checks opening, closing, reopening, quitting, starting at sign-in, running as administrator, recovering from a crash and uninstalling.
+
+Screenshots are attached to each run under **Actions › Windows tests › Artifacts**.
 
 ## Contributing
 

@@ -5,7 +5,7 @@ const repo = "https://github.com/SurajsinghBayas/wakekeeper";
  * so publishing a new release with the same asset names updates the site without a redeploy.
  */
 export const release = {
-  version: "1.2.1",
+  version: "1.3.0",
   date: "2026-10-20",
   repo,
   /** Where testers file bugs; the test plan links to it. Set to null to hide the button. */
@@ -15,12 +15,12 @@ export const release = {
     file: "WakeKeeper-Setup.exe",
     href: `${repo}/releases/latest/download/WakeKeeper-Setup.exe`,
     size: "62 MB",
-    sha256: "196c0c9603235f09491d4c4b24cf671ce7b4e27b7e8d5680aa230e3a84dfdcc4",
+    sha256: "88d8859a51b4bf9f9b54700d6d4547935a344454b103fc461a69661a865732be",
   },
   portable: {
     file: "WakeKeeper-Portable.zip",
     href: `${repo}/releases/latest/download/WakeKeeper-Portable.zip`,
     size: "63 MB",
-    sha256: "a8dbcccf99a4702ea10a78315c663f3074d4e34601a1e22b1bdfea04cac3beaa",
+    sha256: "768901b8c10471ede17e5978dca85703d49f0bac65c4065c4bfcf956ca9c184d",
   },
 } as const;
