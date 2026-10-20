@@ -1,10 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useInView, useReducedMotion } from "motion/react";
+import { AnimatePresence, animate, motion, useInView, useMotionValue, useReducedMotion, useTransform, type MotionValue } from "motion/react";
 import { BatteryCharging, CircleCheck, GitPullRequest, Moon, RotateCcw, SquareTerminal } from "lucide-react";
 import { cn } from "../lib/utils";
+import { CupIcon } from "../components/CupIcon";
 
 const FLUENT = [0, 0, 0, 1] as const;
 const TOTAL = 312;
+/** Lid angle in degrees: 0 is shut, OPEN leans slightly back past upright. */
+const OPEN = 108;
+/** A hand pushing the lid down: slow start, gathering speed until it meets the base. */
+const PUSH = [0.45, 0, 0.75, 0.25] as const;
 
 const points = [
   {
@@ -32,6 +37,19 @@ export function LidClosed() {
   const reduce = useReducedMotion();
   const [closed, setClosed] = useState(false);
   const [tests, setTests] = useState(184);
+  const angle = useMotionValue(OPEN);
+
+  // Close with a small settle bounce on contact; reopen on a spring so the lid wobbles to rest.
+  useEffect(() => {
+    if (reduce) {
+      angle.set(closed ? 0 : OPEN);
+      return;
+    }
+    const controls = closed
+      ? animate(angle, [angle.get(), 0, 2.2, 0], { duration: 1.15, times: [0, 0.78, 0.89, 1], ease: [PUSH, "easeOut", "easeIn"] })
+      : animate(angle, OPEN, { type: "spring", stiffness: 110, damping: 13, mass: 1 });
+    return () => controls.stop();
+  }, [closed, reduce, angle]);
 
   useEffect(() => {
     if (!seen) return;
@@ -51,7 +69,7 @@ export function LidClosed() {
   }, [inView, closed, reduce]);
 
   function toggle() {
-    if (closed) setTests(184);
+    if (!closed) setTests(184);
     setClosed((c) => !c);
   }
 
@@ -83,9 +101,9 @@ export function LidClosed() {
         </div>
 
         <div ref={ref}>
-          <div className="relative mx-auto aspect-[16/11] w-full max-w-lg">
+          <div className="relative mx-auto aspect-[10/9] w-full max-w-lg">
             {/* Notifications that keep arriving while the lid is shut. */}
-            <div className="absolute inset-x-[8%] top-[4%] z-10 space-y-2" aria-live="polite">
+            <div className="absolute inset-x-[8%] top-[2%] z-10 space-y-2" aria-live="polite">
               <AnimatePresence>
                 {closed && (
                   <motion.div
@@ -93,7 +111,7 @@ export function LidClosed() {
                     initial={reduce ? { opacity: 0 } : { opacity: 0, transform: "translateY(-10px) scale(0.98)" }}
                     animate={{ opacity: 1, transform: "translateY(0px) scale(1)" }}
                     exit={{ opacity: 0, transition: { duration: 0.15 } }}
-                    transition={{ duration: 0.4, ease: FLUENT, delay: reduce ? 0 : 0.8 }}
+                    transition={{ duration: 0.4, ease: FLUENT, delay: reduce ? 0 : 1.2 }}
                     className="flex items-center gap-3 rounded-xl bg-white/10 p-3 ring-1 ring-white/15 backdrop-blur-sm"
                   >
                     <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-slate-950 ring-1 ring-white/10">
@@ -134,39 +152,7 @@ export function LidClosed() {
               </AnimatePresence>
             </div>
 
-            {/* Laptop, front view. The lid folds down onto the base around its bottom edge. */}
-            <div className="absolute inset-x-0 bottom-[8%] flex flex-col items-center">
-              <motion.div
-                aria-hidden
-                initial={false}
-                animate={{ transform: closed ? "scaleY(0.045)" : "scaleY(1)" }}
-                transition={reduce ? { duration: 0 } : { duration: 0.9, ease: [0.77, 0, 0.175, 1] }}
-                style={{ transformOrigin: "50% 100%" }}
-                className="aspect-[16/10] w-[78%] rounded-t-[14px] bg-gradient-to-b from-slate-200 to-slate-400 p-[2.2%] shadow-[0_-1px_0_rgb(255_255_255/0.6)_inset]"
-              >
-                <div
-                  className={cn(
-                    "h-full rounded-[6px] bg-slate-950 p-[4%] font-mono text-[10px] leading-relaxed text-slate-300 transition-opacity duration-300 sm:text-[11px]",
-                    closed && "opacity-0",
-                  )}
-                >
-                  <p className="text-sky-300">› agent run --task "migrate billing"</p>
-                  <p>› reading 214 files…</p>
-                  <p>› editing src/billing/webhooks.ts</p>
-                  <p className="tabular-nums">› tests {tests}/{TOTAL}</p>
-                </div>
-              </motion.div>
-              {/* Base with a front-edge notch and a status light. */}
-              <div className="relative h-3 w-[92%] rounded-b-[10px] bg-gradient-to-b from-slate-300 to-slate-500 shadow-[0_18px_30px_-12px_rgb(0_0_0/0.6)]">
-                <span className="absolute top-0 left-1/2 h-1 w-[14%] -translate-x-1/2 rounded-b-md bg-slate-500/70" />
-                <span
-                  className={cn(
-                    "absolute top-1 right-[8%] size-1 rounded-full transition-colors duration-500",
-                    closed ? "bg-sky-300 shadow-[0_0_6px_var(--color-sky-300)]" : "bg-slate-600",
-                  )}
-                />
-              </div>
-            </div>
+            <Laptop angle={angle} tests={tests} closed={closed} finished={finished} />
           </div>
 
           <div className="mx-auto mt-6 flex max-w-lg flex-wrap items-center justify-between gap-3">
@@ -186,5 +172,99 @@ export function LidClosed() {
         </div>
       </div>
     </section>
+  );
+}
+
+const KEY_ROWS = [13, 13, 12, 11];
+
+/**
+ * A laptop in real 3D: the deck lies tilted away from the viewer and the lid swings on its back hinge.
+ * The lid has two faces, the silver shell and the display, so either side shows correctly at any angle.
+ */
+function Laptop({ angle, tests, closed, finished }: { angle: MotionValue<number>; tests: number; closed: boolean; finished: boolean }) {
+  const lid = useTransform(angle, (a) => `translateZ(2px) rotateX(${a}deg)`);
+  // The display switches off as the lid nears the base and wakes on the way back up.
+  const screenOn = useTransform(angle, [18, 55], [0, 1]);
+  // Light from the display spills onto the keys as the gap narrows, then vanishes at contact.
+  const spill = useTransform(angle, [0, 4, 45, OPEN], [0, 0.7, 0.28, 0.1]);
+  const shadow = useTransform(angle, [0, OPEN], [0.55, 0.35]);
+
+  return (
+    <div aria-hidden className="absolute inset-0" style={{ perspective: "1700px", perspectiveOrigin: "50% 10%" }}>
+      <div
+        className="absolute inset-x-[13%] bottom-[2%] aspect-[16/10]"
+        style={{ transformStyle: "preserve-3d", transform: "rotateX(57deg)" }}
+      >
+        {/* Contact shadow on the desk. */}
+        <motion.div
+          className="absolute -inset-x-[4%] -inset-y-[6%] rounded-[24px] bg-black blur-xl"
+          style={{ transform: "translateZ(-14px)", opacity: shadow }}
+        />
+
+        {/* Deck: hinge, keyboard and trackpad. */}
+        <div className="absolute inset-0 rounded-[12px] bg-gradient-to-b from-slate-300 to-slate-400 shadow-[inset_0_1px_0_rgb(255_255_255/0.5)]">
+          <div className="absolute inset-x-[6%] top-0 h-[3%] rounded-b-sm bg-slate-500/80" />
+          <div className="absolute inset-x-[7%] top-[9%] flex h-[50%] flex-col gap-[3%] rounded-md bg-slate-500/40 p-[1.5%]">
+            {KEY_ROWS.map((n, r) => (
+              <div key={r} className="flex flex-1 gap-[1.2%]">
+                {Array.from({ length: n }, (_, k) => (
+                  <span key={k} className="flex-1 rounded-[2px] bg-slate-800/85" />
+                ))}
+              </div>
+            ))}
+            <div className="flex flex-1 gap-[1.2%]">
+              <span className="w-[12%] rounded-[2px] bg-slate-800/85" />
+              <span className="w-[9%] rounded-[2px] bg-slate-800/85" />
+              <span className="flex-1 rounded-[2px] bg-slate-800/85" />
+              <span className="w-[9%] rounded-[2px] bg-slate-800/85" />
+              <span className="w-[12%] rounded-[2px] bg-slate-800/85" />
+            </div>
+          </div>
+          <div className="absolute top-[64%] left-1/2 h-[30%] w-[38%] -translate-x-1/2 rounded-md bg-slate-300 ring-1 ring-slate-500/40" />
+          <motion.div className="absolute inset-0 rounded-[12px] bg-sky-300 mix-blend-screen" style={{ opacity: spill }} />
+        </div>
+
+        {/* Front edge, with the status light. */}
+        <div
+          className="absolute top-full right-0 left-0 h-[10px] rounded-b-[8px] bg-gradient-to-b from-slate-400 to-slate-600"
+          style={{ transformOrigin: "50% 0%", transform: "rotateX(-90deg)" }}
+        >
+          <span className="absolute top-0 left-1/2 h-[45%] w-[14%] -translate-x-1/2 rounded-b-md bg-slate-600" />
+          <span
+            className={cn(
+              "absolute top-1/2 right-[9%] size-1 -translate-y-1/2 rounded-full transition-colors duration-500",
+              closed ? "animate-pulse bg-sky-300" : "bg-slate-700",
+            )}
+          />
+        </div>
+
+        {/* Lid, hinged on the back edge of the deck. */}
+        <motion.div className="absolute inset-0" style={{ transformOrigin: "50% 0%", transformStyle: "preserve-3d", transform: lid }}>
+          <div
+            className="absolute inset-0 grid place-items-center rounded-[12px] bg-gradient-to-b from-slate-200 to-slate-300 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.45)]"
+            style={{ backfaceVisibility: "hidden" }}
+          >
+            <CupIcon active={false} className="size-[14%] opacity-40" />
+          </div>
+          <div
+            className="absolute inset-0 rounded-[12px] bg-slate-900 p-[2.5%] ring-1 ring-slate-400"
+            style={{ backfaceVisibility: "hidden", transform: "rotateX(180deg) translateZ(1px)" }}
+          >
+            <span className="absolute top-[1%] left-1/2 size-[3px] -translate-x-1/2 rounded-full bg-slate-700" />
+            <motion.div
+              className="h-full overflow-hidden rounded-[6px] bg-slate-950 p-[4%] font-mono text-[clamp(7px,2.2vw,11px)] leading-relaxed text-slate-300"
+              style={{ opacity: screenOn }}
+            >
+              <p className="text-sky-300">› agent run --task "migrate billing"</p>
+              <p>› reading 214 files…</p>
+              <p>› editing src/billing/webhooks.ts</p>
+              <p className="tabular-nums">› tests {tests}/{TOTAL}</p>
+              {finished && <p className="text-emerald-300">› pull request #418 opened</p>}
+              <p className="mt-1 h-[1.2em] w-[0.6em] animate-pulse bg-slate-400/80" />
+            </motion.div>
+          </div>
+        </motion.div>
+      </div>
+    </div>
   );
 }
