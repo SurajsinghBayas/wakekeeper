@@ -6,12 +6,18 @@
 @theme {
   --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, "SFMono-Regular", monospace;
-  /* Stronger curves than the CSS defaults (Emil Kowalski, design-eng skill). */
+  /* Stronger curves than the CSS defaults (design-eng skill). */
   --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
+  /* Windows 11 "decelerate" curve used by flyouts and toasts. */
+  --ease-fluent: cubic-bezier(0, 0, 0, 1);
 }
 
 @layer base {
+  :root {
+    color-scheme: light;
+  }
+
   html {
     scroll-behavior: smooth;
     scroll-padding-top: 5rem;
@@ -19,15 +25,15 @@
   }
 
   body {
-    @apply bg-stone-50 font-sans text-stone-900 dark:bg-stone-950 dark:text-stone-100;
+    @apply bg-slate-50 font-sans text-slate-900;
   }
 
   ::selection {
-    @apply bg-amber-200 text-stone-900;
+    @apply bg-sky-200 text-slate-900;
   }
 
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-amber-600;
+    @apply outline-2 outline-offset-2 outline-sky-600;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -39,18 +45,24 @@
 
 /* Entrance stagger for first paint only; elements opt in with .rise and a --i index. */
 @utility rise {
-  animation: rise 520ms var(--ease-out-strong) both;
-  animation-delay: calc(var(--i, 0) * 60ms);
+  animation: rise 560ms var(--ease-out-strong) both;
+  animation-delay: calc(var(--i, 0) * 70ms);
 
   @media (prefers-reduced-motion: reduce) {
     animation: fade 200ms ease both;
   }
 }
 
+/* Brushed-silver surface: a very light vertical sheen on top of slate. */
+@utility silver {
+  background-color: var(--color-slate-100);
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.9), rgb(255 255 255 / 0) 60%);
+}
+
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(10px);
   }
 }
 

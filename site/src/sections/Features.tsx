@@ -48,21 +48,21 @@ const features = [
 
 export function Features() {
   return (
-    <section id="features" className="border-t border-stone-200 dark:border-stone-800">
+    <section id="features" className="border-b border-slate-200 bg-white">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[1fr_2fr] lg:py-28">
         <div className="lg:sticky lg:top-24 lg:self-start">
-          <h2 className="text-3xl font-semibold text-balance">Everything a keep-awake app should do, and nothing else.</h2>
-          <p className="mt-4 text-pretty text-stone-600 dark:text-stone-400">
-            A single small app with no installer, no account and no background service. It uses Windows' own power APIs, so
-            Windows reports exactly why your PC is staying awake.
+          <h2 className="text-3xl font-semibold text-balance">Everything a keep-awake app should do. Nothing it shouldn't.</h2>
+          <p className="mt-4 text-pretty text-slate-600">
+            One small tray app with no account and no background service. It uses Windows' own power APIs, so nothing is
+            hacked or patched, and quitting it puts everything back as it was.
           </p>
         </div>
-        <dl className="min-w-0 divide-y divide-stone-200 border-y border-stone-200 dark:divide-stone-800 dark:border-stone-800">
+        <dl className="min-w-0 divide-y divide-slate-200 border-y border-slate-200">
           {features.map((f) => (
             <div key={f.name} className="grid gap-x-6 gap-y-1 py-5 sm:grid-cols-[1fr_auto]">
               <dt className="font-medium">{f.name}</dt>
-              <dd className="font-mono text-xs text-stone-400 sm:row-span-2 sm:pt-1 sm:text-right">{f.tech}</dd>
-              <dd className="text-pretty text-stone-600 dark:text-stone-400">{f.body}</dd>
+              <dd className="font-mono text-[11px] text-slate-400 sm:row-span-2 sm:pt-1 sm:text-right">{f.tech}</dd>
+              <dd className="text-pretty text-slate-600">{f.body}</dd>
             </div>
           ))}
         </dl>

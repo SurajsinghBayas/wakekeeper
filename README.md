@@ -1,42 +1,48 @@
 # WakeKeeper
 
-A Windows tray app that keeps your PC awake while long jobs run, with timers, app and download sessions,
-lid-closed mode and automatic Triggers.
+Keep your Windows PC awake while AI agents, builds, downloads and backups run, even with the laptop lid closed.
 
-## Build
+**Download:** [WakeKeeper-Setup.exe](https://github.com/SurajsinghBayas/wakekeeper/releases/latest/download/WakeKeeper-Setup.exe) · [Portable .zip](https://github.com/SurajsinghBayas/wakekeeper/releases/latest/download/WakeKeeper-Portable.zip) · Windows 10 and 11, 64-bit
 
-Requires the .NET 8 SDK.
+## Using it
 
-```powershell
-dotnet run                                  # debug
-dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true
+1. Run **WakeKeeper-Setup.exe** and follow the wizard. No administrator rights are needed. If SmartScreen appears, click **More info**, then **Run anyway**.
+2. Click the cup icon next to the clock to keep the PC awake, and click it again to stop.
+3. Right-click the cup for timers, *While app is running*, *While file is downloading*, **Keep running with lid closed**, and Settings.
+
+To uninstall, go to **Settings › Apps › Installed apps › WakeKeeper › Uninstall**.
+
+## Features
+
+| Feature                    | How it works on Windows                                                                                    |
+|----------------------------|------------------------------------------------------------------------------------------------------------|
+| Sessions                   | Indefinite, minutes/hours, until a time, while an app runs, while a download finishes (`SetThreadExecutionState`) |
+| Lid-closed mode            | Sets the power plan's lid action to "Do nothing" for the session and restores it afterwards, even after a crash |
+| Triggers                   | Start automatically on app running, power, battery, Wi-Fi, schedule, idle time, CPU load or a mounted drive |
+| Battery guard              | End below a charge level or when unplugged, and restart when plugged back in                               |
+| Idle helpers               | Nudge the cursor so chat apps keep you Available, or lock the screen after real inactivity                 |
+| Drive Alive                | Keeps external drives spinning                                                                             |
+| Hot keys                   | Ctrl+Alt+A by default (`RegisterHotKey`)                                                                   |
+| Start with Windows         | Per-user startup entry, set by the installer or in Settings                                                |
+
+WakeKeeper has no network code and no telemetry. Settings live in `%APPDATA%\WakeKeeper\settings.json`.
+
+## Building
+
+The app is .NET 8 WinForms, the installer is NSIS, and the website is Vite + React.
+
+```bash
+# App (Windows, or anywhere with the .NET 8 SDK; EnableWindowsTargeting allows cross-builds)
+dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true \
+  -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -o out/full
+
+# Setup wizard (makensis 3.x)
+mkdir -p out/release && (cd installer && makensis -DVERSION=1.1.0 WakeKeeper.nsi)
+
+# Website
+cd site && pnpm install && pnpm build
 ```
 
-The output is `bin/Release/net8.0-windows/win-x64/publish/WakeKeeper.exe`.
-Settings are stored in `%APPDATA%\WakeKeeper\settings.json`.
+## Releasing
 
-## How it works
-
-| Feature                                                                                  | Windows implementation                                                                   |
-|------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|
-| Sessions: indefinite, minutes/hours, until a time, while an app runs, while a file downloads | `SetThreadExecutionState`                                                             |
-| Allow display sleep, allow screen saver after N                                          | `ES_DISPLAY_REQUIRED` toggled on or off                                                  |
-| Lid closed mode                                                                          | `powercfg` sets the lid action to "Do nothing" during sessions, with a crash-safe restore |
-| End on low battery, end if unplugged, restart when replugged                             | `SystemInformation.PowerStatus`                                                          |
-| Move cursor / lock screen after inactivity                                               | `GetLastInputInfo`, `SendInput`, `LockWorkStation`                                       |
-| Triggers: app, battery and power, Wi-Fi, schedule, idle, CPU, drives                     | Process list, `netsh wlan`, `GetSystemTimes`, `DriveInfo`                                |
-| Drive Alive                                                                              | Hidden file written at a set interval                                                    |
-| Hot keys                                                                                 | `RegisterHotKey`                                                                         |
-| End on sleep, start after wake, user switching                                           | `SystemEvents.PowerModeChanged` / `SessionSwitch`                                        |
-| Launch at login                                                                          | `HKCU\…\Run`                                                                           |
-| Notifications, reminders, statistics                                                     | Tray balloon tips                                                                        |
-
-### Not yet included
-- Triggers for Bluetooth, USB, audio output, displays, DNS, IP and VPN. Each one needs its own Windows API.
-- A scripting interface (a CLI or named pipe).
-
-### Windows-specific notes
-- On Windows, the screen saver and display sleep are both controlled by the display request. Because of that, "allow screen saver after N" also lets the display turn off.
-- On some machines, changing the lid action needs administrator rights. If it fails, WakeKeeper shows a notification.
-- On Windows 11 24H2 and later, reading the Wi-Fi SSID needs Location access.
-- Left-clicking the tray icon starts or ends a session, and right-clicking opens the menu.
+Upload `WakeKeeper-Setup.exe` and `WakeKeeper-Portable.zip` to a GitHub release with exactly those names. The website links to `releases/latest/download/…`, so it serves the new version without a redeploy. Update the version and SHA-256 values in `site/src/lib/release.ts`.

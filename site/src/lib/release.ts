@@ -1,31 +1,25 @@
-/** Single source of truth for the current release. Update when publishing a new build. */
-export const release = {
-  version: "1.0.0",
-  date: "2026-10-20",
-  /** Where testers file bugs; the test plan links to it. Set to null to hide the button. */
-  issuesUrl: "https://github.com/SurajsinghBayas/wakekeeper/issues/new" as string | null,
-  builds: [
-    {
-      id: "standalone",
-      name: "Standalone",
-      file: "WakeKeeper-1.0.0-win-x64.zip",
-      href: "https://github.com/SurajsinghBayas/wakekeeper/releases/download/v1.0.0/WakeKeeper-1.0.0-win-x64.zip",
-      size: "63 MB",
-      sha256: "9cc2f3c9b8528774b5d492c143af6c57fbb828736541456a62c56afb531c73d2",
-      note: "Everything included. Unzip and run.",
-      recommended: true,
-    },
-    {
-      id: "lite",
-      name: "Lite",
-      file: "WakeKeeper-1.0.0-win-x64-lite.zip",
-      href: "https://github.com/SurajsinghBayas/wakekeeper/releases/download/v1.0.0/WakeKeeper-1.0.0-win-x64-lite.zip",
-      size: "93 KB",
-      sha256: "c3adaf81e781b6913178a195a7330c601bf7c406c33fa0dc5ee0e9f03a817ce9",
-      note: "Needs the .NET 8 Desktop Runtime installed.",
-      recommended: false,
-    },
-  ],
-} as const;
+const repo = "https://github.com/SurajsinghBayas/wakekeeper";
 
-export type Build = (typeof release.builds)[number];
+/**
+ * Single source of truth for the current release. Downloads use GitHub's "latest release" URLs,
+ * so publishing a new release with the same asset names updates the site without a redeploy.
+ */
+export const release = {
+  version: "1.1.0",
+  date: "2026-10-20",
+  repo,
+  /** Where testers file bugs; the test plan links to it. Set to null to hide the button. */
+  issuesUrl: `${repo}/issues/new` as string | null,
+  setup: {
+    file: "WakeKeeper-Setup.exe",
+    href: `${repo}/releases/latest/download/WakeKeeper-Setup.exe`,
+    size: "62 MB",
+    sha256: "f03c33cfcfe2c6ba78072e69e02918646af16af5a9a362fcde7635ddd16935e5",
+  },
+  portable: {
+    file: "WakeKeeper-Portable.zip",
+    href: `${repo}/releases/latest/download/WakeKeeper-Portable.zip`,
+    size: "63 MB",
+    sha256: "a3a320fe78376887d267755e0b8f6502516e5cc7edcdbc3f45772065d4a763f5",
+  },
+} as const;

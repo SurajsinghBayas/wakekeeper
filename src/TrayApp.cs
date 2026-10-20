@@ -4,7 +4,7 @@ using Microsoft.Win32;
 namespace WakeKeeper;
 
 /// <summary>System-tray application: icon, menu, timers, hot keys and power events.</summary>
-public sealed class TrayApp : ApplicationContext
+internal sealed class TrayApp : ApplicationContext
 {
     private static readonly int[] DurationMinutes = { 5, 10, 15, 30, 45, 60, 120, 180, 240, 300, 360, 480, 720, 1440 };
 
@@ -19,9 +19,12 @@ public sealed class TrayApp : ApplicationContext
     private SettingsForm? _settingsForm;
     private int _tickCount;
 
-    public TrayApp()
+    public TrayApp(InstanceSignals signals)
     {
+        bool firstRun = !Settings.Exists;
         _settings = Settings.Load();
+        // The installer may have registered (or the user removed) the startup entry; the registry is the truth.
+        _settings.LaunchAtLogin = Startup.IsEnabled;
         LidControl.Restore(); // recover from a crash while lid-closed mode was active
         _sessions = new SessionManager(_settings);
         _triggers = new TriggerEngine(_settings, _sessions);
@@ -54,8 +57,22 @@ public sealed class TrayApp : ApplicationContext
         _timer.Tick += (_, _) => Tick();
         _timer.Start();
 
+        // Creating the ContextMenuStrip installed the WinForms synchronization context.
+        var ui = SynchronizationContext.Current!;
+        signals.Listen(
+            onQuit: () => ui.Post(_ => ExitThread(), null),
+            onShow: () => ui.Post(_ => _tray.ShowBalloonTip(4000, "WakeKeeper is already running",
+                "Click the cup in the taskbar to keep your PC awake. Right-click it for more options.", ToolTipIcon.None), null));
+
         if (_settings.StartSessionAtLaunch) _sessions.StartDefault();
         UpdateTray();
+
+        if (firstRun)
+        {
+            _settings.Save();
+            _tray.ShowBalloonTip(8000, "WakeKeeper is ready",
+                "Click the cup in the taskbar to keep your PC awake. Right-click it for timers, lid-closed mode and more.", ToolTipIcon.None);
+        }
     }
 
     private void Tick()
@@ -117,6 +134,18 @@ public sealed class TrayApp : ApplicationContext
             menu.Items.Add(new ToolStripMenuItem("Not keeping your PC awake") { Enabled = false });
         }
 
+        if (SystemProbe.HasBattery)
+        {
+            menu.Items.Add(Check("Keep running with lid closed", _settings.PreventSleepWhenLidClosed, v =>
+            {
+                _settings.PreventSleepWhenLidClosed = v;
+                if (_sessions.Current == null) return;
+                if (v && !LidControl.Override())
+                    _tray.ShowBalloonTip(5000, "Lid-closed mode unavailable", "Windows didn't allow the lid setting to be changed on this PC.", ToolTipIcon.Warning);
+                else if (!v) LidControl.Restore();
+            }));
+        }
+
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(new ToolStripMenuItem("Start New Session:") { Enabled = false });
         menu.Items.Add("Indefinitely", null, (_, _) => _sessions.Start(new Session { Kind = SessionKind.Indefinite }));
@@ -139,12 +168,6 @@ public sealed class TrayApp : ApplicationContext
         menu.Items.Add(new ToolStripSeparator());
         var quick = new ToolStripMenuItem("Quick Settings");
         quick.DropDownItems.Add(Check("Allow display sleep", s?.AllowDisplaySleep ?? _settings.AllowDisplaySleep, _ => _sessions.ToggleDisplaySleep()));
-        quick.DropDownItems.Add(Check("Keep awake with lid closed", _settings.PreventSleepWhenLidClosed, v =>
-        {
-            _settings.PreventSleepWhenLidClosed = v;
-            if (_sessions.Current == null) return;
-            if (v) LidControl.Override(); else LidControl.Restore();
-        }));
         quick.DropDownItems.Add(Check($"Move cursor after {_settings.MoveCursorAfterMinutes} min of inactivity", _settings.MoveCursorWhenIdle, v => _settings.MoveCursorWhenIdle = v));
         quick.DropDownItems.Add(Check($"Lock screen after {_settings.LockScreenAfterMinutes} min of inactivity", _settings.LockScreenWhenIdle, v => _settings.LockScreenWhenIdle = v));
         quick.DropDownItems.Add(Check($"End session if battery is below {_settings.LowBatteryPercent}%", _settings.EndSessionOnLowBattery, v => _settings.EndSessionOnLowBattery = v));
@@ -237,16 +260,24 @@ public sealed class TrayApp : ApplicationContext
         using (var g = Graphics.FromImage(bmp))
         {
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            var color = active ? Color.FromArgb(255, 196, 120, 40) : Color.Gray;
-            using var pen = new Pen(color, 3);
+            var color = active ? Color.FromArgb(255, 2, 132, 199) : Color.FromArgb(255, 100, 116, 139);
+            using var pen = new Pen(color, 3) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round };
             using var brush = new SolidBrush(color);
-            var cup = new Rectangle(4, 10, 18, 16);
-            if (active) g.FillRectangle(brush, cup); else g.DrawRectangle(pen, cup);
-            g.DrawArc(pen, 18, 13, 10, 9, -90, 180);
+
+            // Mug body: flat top, rounded bottom (matches the app icon).
+            using var body = new GraphicsPath();
+            body.AddLine(4, 13, 21, 13);
+            body.AddLine(21, 13, 21, 20);
+            body.AddArc(13, 13, 8, 12, 0, 90);
+            body.AddArc(4, 13, 8, 12, 90, 90);
+            body.CloseFigure();
+            if (active) g.FillPath(brush, body); else g.DrawPath(pen, body);
+
+            g.DrawArc(pen, 18, 15, 9, 8, -90, 180); // handle
             if (active)
             {
-                g.DrawBezier(pen, 9, 8, 7, 5, 11, 4, 9, 1);
-                g.DrawBezier(pen, 16, 8, 14, 5, 18, 4, 16, 1);
+                g.DrawBezier(pen, 10, 10, 8, 7, 12, 6, 10, 2);
+                g.DrawBezier(pen, 16, 10, 14, 7, 18, 6, 16, 2);
             }
         }
         var handle = bmp.GetHicon();
@@ -304,6 +335,15 @@ internal sealed class HotkeyWindow : NativeWindow
 internal static class Startup
 {
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
+
+    public static bool IsEnabled
+    {
+        get
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(RunKey);
+            return key?.GetValue("WakeKeeper") != null;
+        }
+    }
 
     public static void Apply(bool enabled)
     {

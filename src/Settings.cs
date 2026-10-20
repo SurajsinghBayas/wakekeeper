@@ -111,6 +111,8 @@ public sealed class Settings
     public static string Folder => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "WakeKeeper");
     private static string FilePath => Path.Combine(Folder, "settings.json");
 
+    public static bool Exists => File.Exists(FilePath);
+
     public static Settings Load()
     {
         try

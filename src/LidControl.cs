@@ -4,8 +4,7 @@ using System.Text.RegularExpressions;
 namespace WakeKeeper;
 
 /// <summary>Lid-closed mode: keeps a laptop running with the lid shut. Execution-state requests cannot
-/// stop lid-close sleep on Windows, so this
-/// temporarily sets the active power plan's lid action to "Do nothing" and restores it afterwards.
+/// stop lid-close sleep on Windows, so this temporarily sets the active power plan's lid action to "Do nothing" and restores it afterwards.
 /// The original values are persisted so they can be restored after a crash.</summary>
 internal static class LidControl
 {

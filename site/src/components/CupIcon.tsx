@@ -1,28 +1,24 @@
 import { cn } from "../lib/utils";
 
-/** The same coffee cup the Windows app draws for its tray icon: filled when awake, outlined when idle. */
+/** The tray glyph the Windows app draws: a filled mug with steam while awake, an outline when idle. */
 export function CupIcon({ active, className }: { active: boolean; className?: string }) {
+  const stroke = active ? "stroke-sky-600" : "stroke-slate-500";
   return (
-    <svg viewBox="0 0 32 32" fill="none" strokeWidth={3} strokeLinecap="round" aria-hidden className={cn("size-5", className)}>
-      <rect
-        x="4"
-        y="11"
-        width="18"
-        height="15"
-        rx="2"
-        className={cn(
-          "transition-[fill,stroke] duration-200",
-          active ? "fill-amber-600 stroke-amber-600" : "fill-transparent stroke-stone-500 dark:stroke-stone-400",
-        )}
-      />
+    <svg viewBox="0 0 32 32" fill="none" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden className={cn("size-5", className)}>
       <path
-        d="M22 14a4.5 4.5 0 0 1 0 9"
-        className={cn("transition-[stroke] duration-200", active ? "stroke-amber-600" : "stroke-stone-500 dark:stroke-stone-400")}
+        d="M5 13h16v6a6 6 0 0 1-6 6h-4a6 6 0 0 1-6-6z"
+        className={cn("transition-[fill,stroke] duration-200", stroke, active ? "fill-sky-600" : "fill-transparent")}
       />
+      <path d="M21 15.5h1.5a3.5 3.5 0 0 1 0 7H21" className={cn("transition-[stroke] duration-200", stroke)} />
       <path
-        d="M9 8c-2-2 2-3 0-6M16 8c-2-2 2-3 0-6"
-        className={cn("stroke-amber-600 transition-opacity duration-200", active ? "opacity-100" : "opacity-0")}
+        d="M10.5 10c-1.5-1.5 1.5-2.5 0-5M15.5 10c-1.5-1.5 1.5-2.5 0-5"
+        className={cn("stroke-sky-600 transition-[opacity,transform] duration-300 ease-out", active ? "opacity-100" : "translate-y-1 opacity-0")}
       />
     </svg>
   );
+}
+
+/** The full-colour app tile used in the installer, Start menu and notifications. */
+export function AppTile({ className }: { className?: string }) {
+  return <img src="/favicon.svg" alt="" className={cn("size-8", className)} draggable={false} />;
 }
