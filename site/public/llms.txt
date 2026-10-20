@@ -1,0 +1,19 @@
+# WakeKeeper
+
+> WakeKeeper is a free Windows 10 and 11 tray app that keeps a PC awake while AI coding agents (Claude Code, Codex, Cursor), builds, downloads, renders and backups run, even with the laptop lid closed. It restores the user's normal power settings when the session ends.
+
+- Website: https://www.wakekeeper.tech/
+- Download (setup wizard): https://github.com/SurajsinghBayas/wakekeeper/releases/latest/download/WakeKeeper-Setup.exe
+- Download (portable zip): https://github.com/SurajsinghBayas/wakekeeper/releases/latest/download/WakeKeeper-Portable.zip
+- Source code (MIT): https://github.com/SurajsinghBayas/wakekeeper
+- Support: surajyou45@gmail.com
+
+## What it does
+
+- Keep awake until stopped, for 5 minutes to 24 hours, for a custom time, until a clock time, while an app is open, or until downloads finish.
+- Keep running with lid closed: sets the lid action to "Do nothing" only during a session and restores it afterwards, even after a crash.
+- Auto-start rules: start when an app runs, on power or battery changes, on a Wi-Fi network, on a schedule, when idle, on CPU load or when a drive is mounted.
+- Battery guard: end below a charge level or when unplugged.
+- Idle helpers: nudge the cursor so chat apps keep you Available, or lock the screen after inactivity.
+- Keep external drives spinning, hot keys, start with Windows, session statistics.
+- No administrator rights, no account, no telemetry, no network code.

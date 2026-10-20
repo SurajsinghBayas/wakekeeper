@@ -1,10 +1,22 @@
 import { Accordion } from "@base-ui/react/accordion";
 import { Plus } from "lucide-react";
 
-const faqs = [
+export const faqs = [
   {
     q: "Does it work with Claude Code, Codex, Cursor and other agents?",
     a: "Yes. WakeKeeper doesn't need to know what the agent is. It keeps Windows awake, so anything running on the PC keeps running. The neatest setup is While an app is open with the terminal or editor the agent lives in.",
+  },
+  {
+    q: "How do I keep my Windows laptop running with the lid closed?",
+    a: "Right-click the WakeKeeper cup in the taskbar, turn on Keep running with lid closed and start a session. While the session runs, closing the lid doesn't put the laptop to sleep, so downloads, builds and agents carry on. When the session ends, your normal lid setting comes back automatically.",
+  },
+  {
+    q: "How do I stop my PC from sleeping during a long download or update?",
+    a: "Click the WakeKeeper cup in the taskbar and choose Until downloads finish, or pick a time such as 2 hours. Windows stays awake until the download stops or the timer runs out, then sleeps normally again.",
+  },
+  {
+    q: "How is WakeKeeper different from PowerToys Awake or Caffeine?",
+    a: "All three keep Windows awake. WakeKeeper adds lid-closed mode, sessions that end when an app closes or a download finishes, auto-start rules for Wi-Fi, power, schedules and CPU load, low-battery protection and a setup wizard. It's a single small app, so you don't need to install a whole toolkit.",
   },
   {
     q: "Is it really safe to close the lid?",
@@ -53,7 +65,7 @@ export function Faq() {
                   />
                 </Accordion.Trigger>
               </Accordion.Header>
-              <Accordion.Panel className="h-[var(--accordion-panel-height)] overflow-hidden transition-[height] duration-200 ease-out-strong data-[ending-style]:h-0 data-[starting-style]:h-0">
+              <Accordion.Panel hiddenUntilFound className="h-[var(--accordion-panel-height)] overflow-hidden transition-[height] duration-200 ease-out-strong data-[ending-style]:h-0 data-[starting-style]:h-0">
                 <p className="pb-5 text-pretty text-slate-600">{f.a}</p>
               </Accordion.Panel>
             </Accordion.Item>

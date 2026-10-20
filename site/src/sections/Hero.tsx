@@ -49,7 +49,7 @@ export function Hero() {
         <div>
           <p className="rise inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600 shadow-xs [--i:0]">
             <span className="size-1.5 rounded-full bg-sky-500" />
-            For Windows 10 and 11 · v{release.version}
+            Free keep-awake app for Windows 10 and 11 · v{release.version}
           </p>
           <h1 className="rise mt-5 text-4xl font-semibold text-balance [--i:1] sm:text-5xl">
             Close the lid. Your agents keep working.

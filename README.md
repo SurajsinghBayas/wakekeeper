@@ -1,10 +1,45 @@
+<div align="center">
+
+<img src="assets/WakeKeeper.png" width="96" alt="WakeKeeper icon">
+
 # WakeKeeper
 
-![WakeKeeper: close the lid, your agents keep working](assets/banner.png)
+**Close the lid. Your agents keep working.**
 
-Keep your Windows PC awake while AI agents, builds, downloads and backups run, even with the laptop lid closed.
+A free Windows tray app that keeps your PC awake while AI agents, builds, downloads and backups run,
+even with the laptop lid closed. When the job is done, your normal sleep settings come straight back.
 
-**Website:** [wakekeeper.tech](https://www.wakekeeper.tech) · **Download:** [WakeKeeper-Setup.exe](https://github.com/SurajsinghBayas/wakekeeper/releases/latest/download/WakeKeeper-Setup.exe) · [Portable .zip](https://github.com/SurajsinghBayas/wakekeeper/releases/latest/download/WakeKeeper-Portable.zip) · Windows 10 and 11, 64-bit
+[![Latest release](https://img.shields.io/github/v/release/SurajsinghBayas/wakekeeper?label=version&color=0284c7)](https://github.com/SurajsinghBayas/wakekeeper/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/SurajsinghBayas/wakekeeper/total?color=0284c7)](https://github.com/SurajsinghBayas/wakekeeper/releases)
+[![CI](https://github.com/SurajsinghBayas/wakekeeper/actions/workflows/ci.yml/badge.svg)](https://github.com/SurajsinghBayas/wakekeeper/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-64748b)](LICENSE)
+
+[**Download for Windows**](https://github.com/SurajsinghBayas/wakekeeper/releases/latest/download/WakeKeeper-Setup.exe) ·
+[Portable .zip](https://github.com/SurajsinghBayas/wakekeeper/releases/latest/download/WakeKeeper-Portable.zip) ·
+[Website](https://www.wakekeeper.tech) ·
+[Report a bug](https://github.com/SurajsinghBayas/wakekeeper/issues/new/choose)
+
+<sub>Windows 10 and 11, 64-bit · no admin rights · no account · no telemetry</sub>
+
+<br>
+
+<img src="assets/demo.gif" width="760" alt="WakeKeeper demo: start a session from the taskbar, close the lid, and the agent finishes overnight">
+
+</div>
+
+## Why WakeKeeper
+
+Windows sleeps when it thinks you've walked away, and it always sleeps when you close a laptop lid. That's great until
+an AI agent is halfway through a refactor, a 40 GB game is downloading, or a backup is running overnight.
+
+- **AI agents and long builds.** Let Claude Code, Codex, Cursor or a CI job run for hours, then close the lid and leave.
+- **Big downloads and updates.** Stay awake *until downloads finish*, then sleep on its own.
+- **Renders, exports and backups.** Keep awake *while an app is open*, and stop when it closes.
+- **Presentations and calls.** Keep the screen on, and keep chat apps showing you as Available.
+- **Closed-lid setups.** Keep a shut laptop working on your desk or docked to a monitor.
+
+Unlike changing your power plan by hand, WakeKeeper only overrides sleep **while a session runs**, and puts everything
+back afterwards, even if the PC crashes or restarts.
 
 ## Using it
 
@@ -57,3 +92,18 @@ cd site && pnpm install && pnpm build
 ## Releasing
 
 Upload `WakeKeeper-Setup.exe` and `WakeKeeper-Portable.zip` to a GitHub release with exactly those names. The website links to `releases/latest/download/…`, so it serves the new version without a redeploy. Update the version and SHA-256 values in `site/src/lib/release.ts`.
+
+## Contributing
+
+Contributions are welcome, from bug reports and testing on different laptops to code.
+
+1. Read [CONTRIBUTING.md](CONTRIBUTING.md) for setup, the build commands and what a good pull request looks like.
+2. For anything bigger than a small fix, open an issue first so we can agree on the approach.
+3. Fork, branch from `main`, and open a pull request. CI builds the app on Windows and the website; both must pass.
+4. The maintainer reviews it, and approved pull requests are squash-merged into `main`.
+
+Not a coder? [Run the test plan](https://www.wakekeeper.tech/#test) on your PC and report what you find. It helps a lot.
+
+## License
+
+[MIT](LICENSE) © 2026 Suraj Bayas

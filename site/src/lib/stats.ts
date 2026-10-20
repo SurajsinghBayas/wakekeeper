@@ -39,10 +39,12 @@ async function fetchStats(): Promise<Stats> {
 
 /** Public numbers read live from GitHub, cached briefly per visitor. Null until loaded or if GitHub is unreachable. */
 export function useStats(): Stats | null {
-  const [stats, setStats] = useState<Stats | null>(() => readStorage<{ at: number; stats: Stats } | null>(CACHE_KEY, null)?.stats ?? null);
+  // Starts empty on every render so the prerendered HTML and the first browser render match.
+  const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
     const cached = readStorage<{ at: number; stats: Stats } | null>(CACHE_KEY, null);
+    if (cached) setStats(cached.stats);
     if (cached && Date.now() - cached.at < CACHE_MS) return;
     let cancelled = false;
     fetchStats()

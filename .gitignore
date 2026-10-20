@@ -4,5 +4,6 @@ out/
 dist/
 site/node_modules/
 site/dist/
+site/dist-ssr/
 site/.vercel/
 .DS_Store

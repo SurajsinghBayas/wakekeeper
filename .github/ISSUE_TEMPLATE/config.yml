@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Troubleshooting guide
+    url: https://github.com/SurajsinghBayas/wakekeeper#troubleshooting
+    about: Fixes for the most common problems.
+  - name: Email support
+    url: https://www.wakekeeper.tech/#support
+    about: Email surajyou45@gmail.com with questions you'd rather not post publicly.

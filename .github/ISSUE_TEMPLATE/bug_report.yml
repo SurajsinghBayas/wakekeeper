@@ -1,0 +1,36 @@
+name: Bug report
+description: Something doesn't work the way it should
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: WakeKeeper version
+      description: Right-click the cup › About WakeKeeper.
+      placeholder: "1.2.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: windows
+    attributes:
+      label: Windows version
+      options: [Windows 11, Windows 10]
+    validations:
+      required: true
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device
+      options: [Laptop, Desktop, Other]
+  - type: textarea
+    id: log
+    attributes:
+      label: Diagnostic log
+      description: Turn on Help & Feedback › Diagnostic logging, reproduce the problem, then drag the file from Open diagnostic log here.

@@ -344,7 +344,7 @@ export function TrayDemo() {
               <Volume2 className="size-4" />
               <BatteryMedium className="size-4" />
             </span>
-            <span className="px-1.5 text-right text-[11px] leading-tight tabular-nums">
+            <span className="px-1.5 text-right text-[11px] leading-tight tabular-nums" suppressHydrationWarning>
               {clock(now)}
               <br />
               {new Date(now).toLocaleDateString([], { day: "numeric", month: "numeric", year: "numeric" })}
