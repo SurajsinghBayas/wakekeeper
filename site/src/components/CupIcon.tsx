@@ -20,5 +20,5 @@ export function CupIcon({ active, className }: { active: boolean; className?: st
 
 /** The full-colour app tile used in the installer, Start menu and notifications. */
 export function AppTile({ className }: { className?: string }) {
-  return <img src="/favicon.svg" alt="" className={cn("size-8", className)} draggable={false} />;
+  return <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" className={cn("size-8", className)} draggable={false} />;
 }
