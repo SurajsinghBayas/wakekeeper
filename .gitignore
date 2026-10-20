@@ -1,0 +1,8 @@
+bin/
+obj/
+out/
+dist/
+site/node_modules/
+site/dist/
+site/.vercel/
+.DS_Store

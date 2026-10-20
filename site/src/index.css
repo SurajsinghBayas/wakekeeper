@@ -1,0 +1,61 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
+@theme {
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SFMono-Regular", monospace;
+  /* Stronger curves than the CSS defaults (Emil Kowalski, design-eng skill). */
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    @apply bg-stone-50 font-sans text-stone-900 dark:bg-stone-950 dark:text-stone-100;
+  }
+
+  ::selection {
+    @apply bg-amber-200 text-stone-900;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-amber-600;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+/* Entrance stagger for first paint only; elements opt in with .rise and a --i index. */
+@utility rise {
+  animation: rise 520ms var(--ease-out-strong) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: fade 200ms ease both;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
