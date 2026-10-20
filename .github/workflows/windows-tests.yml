@@ -37,6 +37,9 @@ jobs:
       - name: UI and behaviour tests
         shell: pwsh
         run: |
+          # Virtual machines hide the lid setting; unhide it so lid-closed mode can be tested.
+          powercfg -attributes SUB_BUTTONS 5ca83367-6e45-459f-a27b-476b1d01c936 -ATTRIB_HIDE
+          powercfg /query SCHEME_CURRENT SUB_BUTTONS LIDACTION | Select-String 'Index'
           dotnet build tests/WakeKeeper.Tests -c Release -o out/tests -warnaserror
           $p = Start-Process out/tests/WakeKeeper.Tests.exe -ArgumentList 'shots' -PassThru -Wait
           Get-Content shots/results.txt

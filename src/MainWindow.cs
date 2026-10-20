@@ -222,7 +222,7 @@ internal sealed class MainWindow : Form
     {
         var b = MakeButton(text);
         b.Dock = DockStyle.Fill;
-        b.Margin = new Padding(0, 0, grid.ColumnCount == 3 ? 6 : 6, 6);
+        b.Margin = new Padding(0, 0, 6, 6);
         b.Click += (_, _) => onClick();
         grid.Controls.Add(b);
         return b;

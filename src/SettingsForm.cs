@@ -87,9 +87,18 @@ public sealed class SettingsForm : Form
         Text = text, AutoSize = true, Font = new Font("Segoe UI Semibold", 10f), Margin = new Padding(3, 10, 3, 2),
     };
 
+    /// <summary>Leading spaces in a label mark a sub-option; they become an indent instead of a gap.</summary>
+    private static Padding Indent(ref string text)
+    {
+        bool sub = text.StartsWith(' ');
+        text = text.TrimStart();
+        return sub ? new Padding(26, 2, 3, 4) : new Padding(3);
+    }
+
     private static CheckBox CheckBox(string text, bool value, Action<bool> set)
     {
-        var cb = new CheckBox { Text = text, Checked = value, AutoSize = true, MaximumSize = new Size(540, 0) };
+        var margin = Indent(ref text);
+        var cb = new CheckBox { Text = text, Checked = value, AutoSize = true, MaximumSize = new Size(540, 0), Margin = margin };
         cb.CheckedChanged += (_, _) => set(cb.Checked);
         return cb;
     }
@@ -98,7 +107,10 @@ public sealed class SettingsForm : Form
     {
         var num = new NumericUpDown { Minimum = min, Maximum = max, Value = Math.Clamp(value, min, max), Width = 70 };
         num.ValueChanged += (_, _) => set((int)num.Value);
-        return Row(new Label { Text = label, AutoSize = true, Anchor = AnchorStyles.Left }, num);
+        var margin = Indent(ref label);
+        var row = Row(new Label { Text = label, AutoSize = true, Anchor = AnchorStyles.Left }, num);
+        row.Margin = margin;
+        return row;
     }
 
     private static Control HotkeyBox(string label, Hotkey initial, Action<Hotkey> set)
