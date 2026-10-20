@@ -44,25 +44,25 @@ back afterwards, even if the PC crashes or restarts.
 ## Using it
 
 1. Run **WakeKeeper-Setup.exe** and follow the wizard. No administrator rights are needed. If SmartScreen appears, click **More info**, then **Run anyway**.
-2. Click the cup icon next to the clock to keep the PC awake, and click it again to stop.
-3. Right-click the cup for timers, *While an app is open*, *Until downloads finish*, **Keep running with lid closed**, and Settings.
+2. The WakeKeeper window opens. Click **Keep awake**, or pick a time such as **2 hours**, *While an app is open* or *Until downloads finish*.
+3. Close the window whenever you like. WakeKeeper keeps running as a cup next to the clock (click **^** if it's hidden): click the cup to start or stop, right-click it for the menu. Opening WakeKeeper again brings the window back.
 
 To uninstall, go to **Settings › Apps › Installed apps › WakeKeeper › Uninstall**.
 
 ## Troubleshooting
 
 - **My PC still went to sleep.** Make sure the cup in the taskbar is filled in (a session is active). With the lid closed, turn on **Keep running with lid closed** in the menu. Some company-managed PCs block lid changes; WakeKeeper shows a notice when that happens.
-- **My PC no longer sleeps when I want it to.** Right-click the cup › **Help & Feedback › Restore Windows Power Settings**. This ends the session and puts your original lid and sleep settings back.
+- **My PC no longer sleeps when I want it to.** Right-click the cup › **Help › Restore Windows power settings**. This ends the session and puts your original lid and sleep settings back.
 - **Windows says "Windows protected your PC".** The download isn't code-signed yet. Click **More info**, then **Run anyway**.
 - **The hot key doesn't work.** Another app may already use Ctrl+Alt+A. Pick a different one in **Settings › Hot Keys**.
-- **Something else.** Turn on **Help & Feedback › Diagnostic logging**, reproduce the problem, then attach the file from **Open diagnostic log** to a [new issue](https://github.com/SurajsinghBayas/wakekeeper/issues/new).
+- **Something else.** Turn on **Settings › General › Diagnostic logging**, reproduce the problem, then attach the file from **Open diagnostic log** to a [new issue](https://github.com/SurajsinghBayas/wakekeeper/issues/new).
 
 ## Features
 
 | Feature                    | How it works on Windows                                                                                    |
 |----------------------------|------------------------------------------------------------------------------------------------------------|
 | Sessions                   | Indefinite, 5–55 minutes, 1–24 hours, for any hours and minutes, until a time, while an app runs, while a download finishes (`SetThreadExecutionState`) |
-| Quick Options              | Display sleep, lid-closed mode, screen saver after inactivity, battery limits, lock/cursor on inactivity, auto-start rules, drive spinning, time left on the tray icon |
+| Main window and tray menu  | Start or stop in one click, common durations, lid-closed mode and keep-the-screen-on, with everything else in Settings |
 | Lid-closed mode            | Sets the power plan's lid action to "Do nothing" for the session and restores it afterwards, even after a crash |
 | Auto-start rules           | Start automatically on app running, power, battery, Wi-Fi, schedule, idle time, CPU load or a mounted drive |
 | Battery guard              | End below a charge level or when unplugged, and restart when plugged back in                               |

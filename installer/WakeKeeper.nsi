@@ -50,7 +50,7 @@ VIAddVersionKey "LegalCopyright" "Copyright (c) 2026 ${APP}"
 !insertmacro MUI_PAGE_INSTFILES
 
 !define MUI_FINISHPAGE_TITLE "${APP} is installed"
-!define MUI_FINISHPAGE_TEXT "Look for the cup icon in your taskbar, next to the clock. If you don't see it, click the ^ arrow and drag the cup onto the taskbar.$\r$\n$\r$\nClick the cup to keep your PC awake. Right-click it for timers, lid-closed mode and settings."
+!define MUI_FINISHPAGE_TEXT "WakeKeeper opens its window when you click Finish.$\r$\n$\r$\nAfter you close the window it keeps running as a cup next to the clock (click the ^ arrow if it's hidden). Click the cup to keep your PC awake, right-click it for timers and lid-closed mode."
 !define MUI_FINISHPAGE_RUN "$INSTDIR\${EXE}"
 !define MUI_FINISHPAGE_RUN_TEXT "Start ${APP} now"
 !insertmacro MUI_PAGE_FINISH

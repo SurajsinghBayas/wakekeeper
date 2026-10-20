@@ -71,10 +71,11 @@ export function Guide() {
                   and <B>Finish</B>.
                 </p>
               </Step>
-              <Step title="Find the cup next to the clock">
+              <Step title="The WakeKeeper window opens">
                 <p>
-                  New tray icons sometimes start hidden behind the <Kbd>^</Kbd> arrow. Drag the cup onto the taskbar so it's always
-                  in view. A welcome notification tells you it's ready.
+                  Click <B>Keep awake</B> or pick a time. When you close the window, WakeKeeper keeps running as a cup next to the
+                  clock. New tray icons sometimes start hidden behind the <Kbd>^</Kbd> arrow; drag the cup onto the taskbar so it's
+                  always in view. Opening WakeKeeper again from the Start menu brings the window back.
                 </p>
               </Step>
             </Steps>
@@ -95,8 +96,8 @@ export function Guide() {
               </Step>
               <Step title="Right-click for timers and options">
                 <p>
-                  Pick minutes or hours, <i>Custom time</i> for any length or a clock time, <i>While an app is open</i>, or{" "}
-                  <i>Until downloads finish</i>. Add time to a running session from the same menu.
+                  <i>Keep awake for</i> 15 minutes to 8 hours or a custom time, or <i>Keep awake while</i> an app is open or
+                  downloads finish. Add time to a running session from the same menu.
                 </p>
               </Step>
               <Step title="Or use the keyboard">
@@ -107,7 +108,7 @@ export function Guide() {
               </Step>
               <Step title="Fine-tune in Settings">
                 <p>
-                  Right-click the cup › <B>Settings</B> for default duration, battery rules, notifications, mouse nudging and
+                  Right-click the cup › <B>Settings</B> (or open WakeKeeper › Settings) for default duration, battery rules, notifications, mouse nudging and
                   keeping drives spinning.
                 </p>
               </Step>
@@ -119,12 +120,12 @@ export function Guide() {
               <Step title="Start your agent as usual">
                 <p>Claude Code, Codex, Aider or a Cursor background agent in Windows Terminal, VS Code or any other app.</p>
               </Step>
-              <Step title="Right-click the cup › While an app is open › pick that app">
+              <Step title="Right-click the cup › Keep awake while › An app is open › pick that app">
                 <p>WakeKeeper keeps the PC awake until you close that window, then lets it sleep again on its own.</p>
               </Step>
               <Step title="Tick “Keep running with lid closed”">
                 <p>
-                  It's at the top of the menu on laptops. Now you can close the lid, put the laptop on the shelf and check on the
+                  It's in the tray menu and the WakeKeeper window on laptops. Now you can close the lid, put the laptop on the shelf and check on the
                   run from your phone.
                 </p>
               </Step>
@@ -139,7 +140,7 @@ export function Guide() {
 
           <Tabs.Panel value="triggers" className="max-w-2xl pt-10">
             <Steps>
-              <Step title="Right-click the cup › Settings › Auto-Start › Add">
+              <Step title="Right-click the cup › Settings › Auto-start › Add">
                 <p>Give the rule a name, for example “Overnight agent runs”.</p>
               </Step>
               <Step title="Add conditions">
