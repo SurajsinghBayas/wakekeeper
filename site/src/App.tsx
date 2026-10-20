@@ -8,6 +8,7 @@ import { Features } from "./sections/Features";
 import { Guide } from "./sections/Guide";
 import { Hero, Nav } from "./sections/Hero";
 import { LidClosed } from "./sections/LidClosed";
+import { StatsStrip, Support } from "./sections/Support";
 import { TestPlan } from "./sections/TestPlan";
 import { Triggers } from "./sections/Triggers";
 import { UseCases } from "./sections/UseCases";
@@ -19,6 +20,7 @@ export default function App() {
       <Nav />
       <main>
         <Hero />
+        <StatsStrip />
         <UseCases />
         <LidClosed />
         <Features />
@@ -26,6 +28,7 @@ export default function App() {
         <Download />
         <Guide />
         <TestPlan />
+        <Support />
         <Faq />
         <section className="bg-white">
           <div className="mx-auto flex max-w-6xl flex-col items-start gap-6 px-4 py-20 sm:px-6 md:flex-row md:items-center md:justify-between">
@@ -58,6 +61,9 @@ export default function App() {
                 Report an issue
               </a>
             )}
+            <a className="hover:text-slate-900" href={`mailto:${release.supportEmail}`}>
+              Contact
+            </a>
           </nav>
         </div>
       </footer>

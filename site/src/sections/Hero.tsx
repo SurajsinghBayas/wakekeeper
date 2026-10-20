@@ -9,6 +9,7 @@ const nav = [
   { href: "#features", label: "Features" },
   { href: "#install", label: "Install" },
   { href: "#test", label: "Help test" },
+  { href: "#support", label: "Support" },
   { href: "#faq", label: "FAQ" },
 ];
 

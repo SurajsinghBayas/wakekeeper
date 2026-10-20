@@ -10,6 +10,7 @@ export const release = {
   repo,
   /** Where testers file bugs; the test plan links to it. Set to null to hide the button. */
   issuesUrl: `${repo}/issues/new` as string | null,
+  supportEmail: "surajyou45@gmail.com",
   setup: {
     file: "WakeKeeper-Setup.exe",
     href: `${repo}/releases/latest/download/WakeKeeper-Setup.exe`,
