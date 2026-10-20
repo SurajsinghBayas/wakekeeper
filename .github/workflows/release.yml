@@ -22,7 +22,9 @@ jobs:
           $version = '${{ github.ref_name }}'.TrimStart('v')
           dotnet publish WakeKeeper.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -p:Version=$version -warnaserror -o out/full
           New-Item -ItemType Directory -Force out/release | Out-Null
-          if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) { $env:PATH = "C:\Program Files (x86)\NSIS;$env:PATH" }
+          $nsis = 'C:\Program Files (x86)\NSIS'
+          if (-not (Test-Path "$nsis\makensis.exe")) { choco install nsis -y --no-progress | Out-Null }
+          $env:PATH = "$nsis;$env:PATH"
           Push-Location installer; makensis -V2 "/DVERSION=$version" WakeKeeper.nsi; $code = $LASTEXITCODE; Pop-Location
           if ($code -ne 0) { exit $code }
           Compress-Archive -Path out/full/WakeKeeper.exe -DestinationPath out/release/WakeKeeper-Portable.zip
