@@ -48,7 +48,7 @@ export function Support() {
           <h2 className="mt-3 text-3xl font-semibold text-balance sm:text-4xl">Stuck? A real person answers.</h2>
           <p className="mt-4 text-pretty text-slate-600">
             Email is the quickest way to get help. Tell us your Windows version and what happened. If you can, turn on{" "}
-            <span className="font-medium text-slate-800">Feedback &amp; Support › Debug Mode</span> in the tray menu, try again,
+            <span className="font-medium text-slate-800">Settings › General › Diagnostic logging</span>, try again,
             and attach the debug log.
           </p>
         </div>

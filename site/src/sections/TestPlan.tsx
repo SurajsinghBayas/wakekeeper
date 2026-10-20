@@ -10,7 +10,7 @@ import { cn, readStorage, writeStorage } from "../lib/utils";
 const tests = [
   { id: "install", title: "Setup wizard", how: "Run WakeKeeper-Setup.exe and finish the wizard. The cup appears next to the clock along with a welcome notification." },
   { id: "toggle", title: "Click to start and stop", how: "Click the cup. It fills in and a notification says your PC is being kept awake. Click again to stop." },
-  { id: "timed", title: "Timed session ends on its own", how: "Right-click › Minutes › 5 minutes. After 5 minutes the cup goes back to an outline." },
+  { id: "timed", title: "Timed session ends on its own", how: "Right-click › Keep awake for › 15 minutes. After 15 minutes the cup goes back to an outline." },
   { id: "screen", title: "Screen stays on", how: "Set Windows' screen timeout to 1 minute, start a session and leave the PC alone. The screen should stay on." },
   { id: "app", title: "While an app is open", how: "Open Notepad, choose it under While an app is open, then close Notepad. The session stops within a couple of seconds." },
   { id: "download", title: "Until downloads finish", how: "Start a large download in your browser, then this session. It stops shortly after the download finishes." },

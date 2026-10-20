@@ -1,0 +1,54 @@
+name: Windows tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Windows ${{ matrix.os == 'windows-2025' && '11 / Server 2025' || '10 / Server 2022' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, windows-2025]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Build app
+        run: dotnet publish WakeKeeper.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -warnaserror -o out/full
+      - name: Build setup wizard
+        shell: pwsh
+        run: |
+          if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
+            $nsis = 'C:\Program Files (x86)\NSIS'
+            if (-not (Test-Path "$nsis\makensis.exe")) { choco install nsis -y --no-progress | Out-Null }
+            $env:PATH = "$nsis;$env:PATH"
+          }
+          New-Item -ItemType Directory -Force out/release | Out-Null
+          Push-Location installer; makensis -V2 '/DVERSION=1.3.0' WakeKeeper.nsi; $code = $LASTEXITCODE; Pop-Location; exit $code
+      - name: UI and behaviour tests
+        shell: pwsh
+        run: |
+          # Virtual machines hide the lid setting; unhide it so lid-closed mode can be tested.
+          powercfg -attributes SUB_BUTTONS 5ca83367-6e45-459f-a27b-476b1d01c936 -ATTRIB_HIDE
+          powercfg /query SCHEME_CURRENT SUB_BUTTONS LIDACTION | Select-String 'Index'
+          dotnet build tests/WakeKeeper.Tests -c Release -o out/tests -warnaserror
+          $p = Start-Process out/tests/WakeKeeper.Tests.exe -ArgumentList 'shots' -PassThru -Wait
+          Get-Content shots/results.txt
+          if ($p.ExitCode -ne 0) { exit 1 }
+      - name: Install, open, close, reopen, quit, uninstall
+        shell: pwsh
+        run: ./tests/lifecycle.ps1 -Setup out/release/WakeKeeper-Setup.exe -Shots shots
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots-${{ matrix.os }}
+          path: shots

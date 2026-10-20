@@ -18,13 +18,13 @@ import { AppTile, CupIcon } from "./CupIcon";
 import { cn } from "../lib/utils";
 
 type Session = { label: string; endsAt: number | null };
-type SubmenuKey = "minutes" | "hours" | "apps";
+type SubmenuKey = "for" | "while";
 type Notice = { id: number; title: string; body: string };
 
 const FLUENT = [0, 0, 0, 1] as const; // Windows 11 decelerate curve
-const MINUTES = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
-const HOURS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 24];
-const APPS = ["WindowsTerminal", "Code", "chrome", "Teams", "obs64"];
+const DURATIONS = [15, 30, 60, 120, 240, 480];
+const APPS = ["WindowsTerminal", "Code", "chrome", "obs64"];
+const minutesLabel = (n: number) => (n < 60 ? `${n} minutes` : n === 60 ? "1 hour" : `${n / 60} hours`);
 
 const AGENT_LINES = [
   "› agent: reading 214 files in src/",
@@ -102,19 +102,23 @@ export function TrayDemo() {
   const m = remaining !== null ? Math.floor((remaining % 3_600_000) / 60_000) : 0;
   const s = remaining !== null ? Math.floor((remaining % 60_000) / 1000) : 0;
   const status = !session
-    ? "Not keeping your PC awake"
+    ? "Your PC can sleep normally"
     : remaining !== null
       ? `${h}h ${String(m).padStart(2, "0")}m left`
       : session.label;
 
   const submenuItems =
-    submenu?.key === "minutes"
-      ? MINUTES.map((n) => ({ label: `${n} minutes`, short: `${n}m`, run: () => start(`${n} minutes`, n) }))
-      : submenu?.key === "hours"
-        ? HOURS.map((n) => ({ label: n === 1 ? "1 hour" : `${n} hours`, short: `${n}h`, run: () => start(`${n} hours`, n * 60) }))
-        : submenu?.key === "apps"
-          ? APPS.map((a) => ({ label: a, short: a, run: () => start(`While ${a} is running`, null) }))
-          : [];
+    submenu?.key === "for"
+      ? [
+          ...DURATIONS.map((n) => ({ label: minutesLabel(n), short: minutesLabel(n), run: () => start(minutesLabel(n), n) })),
+          { label: "Until I stop it", short: "Until I stop it", run: () => start("Until you stop it", null) },
+        ]
+      : submenu?.key === "while"
+        ? [
+            { label: "Downloads finish", short: "Downloads finish", run: () => start("Until downloads finish", null) },
+            ...APPS.map((a) => ({ label: `${a} is open`, short: `${a} is open`, run: () => start(`While ${a} is running`, null) })),
+          ]
+        : [];
   // Minutes and hours are long lists; two columns keep them inside the desktop.
   const twoColumns = submenuItems.length > 6;
 
@@ -226,19 +230,10 @@ export function TrayDemo() {
                       )}
                     </span>
                   </div>
-                  {session && (
-                    <Item onClick={end} onHover={() => setSubmenu(null)}>
-                      End session
-                    </Item>
-                  )}
-                  <Item checked={lid} onClick={() => setLid((v) => !v)} onHover={() => setSubmenu(null)}>
-                    Keep running with lid closed
+                  <Item onClick={session ? end : () => start("Until you stop it", null)} onHover={() => setSubmenu(null)}>
+                    <span className="font-semibold">{session ? "Stop keeping awake" : "Keep awake"}</span>
                   </Item>
-                  <Divider />
-                  <Item onClick={() => start("Until you stop it", null)} onHover={() => setSubmenu(null)}>
-                    Until I stop it
-                  </Item>
-                  {(["minutes", "hours", "apps"] as const).map((key) => (
+                  {(["for", "while"] as const).map((key) => (
                     <Item
                       key={key}
                       hasSubmenu
@@ -246,15 +241,15 @@ export function TrayDemo() {
                       onHover={(el) => openSub(key, el)}
                       onClick={(el) => (submenu?.key === key ? setSubmenu(null) : openSub(key, el))}
                     >
-                      {key === "minutes" ? "Minutes" : key === "hours" ? "Hours" : "While an app is open"}
+                      {key === "for" ? "Keep awake for" : "Keep awake while"}
                     </Item>
                   ))}
-                  <Item onClick={() => start("Until downloads finish", null)} onHover={() => setSubmenu(null)}>
-                    Until downloads finish
-                  </Item>
                   <Divider />
-                  <Item checked={displaySleep} onClick={() => setDisplaySleep((v) => !v)} onHover={() => setSubmenu(null)}>
-                    Let the screen turn off
+                  <Item checked={lid} onClick={() => setLid((v) => !v)} onHover={() => setSubmenu(null)}>
+                    Keep running with lid closed
+                  </Item>
+                  <Item checked={!displaySleep} onClick={() => setDisplaySleep((v) => !v)} onHover={() => setSubmenu(null)}>
+                    Keep the screen on
                   </Item>
                 </div>
               </div>

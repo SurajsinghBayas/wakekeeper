@@ -5,7 +5,7 @@ Thanks for helping. Bug reports, testing on different laptops, wording fixes and
 ## Ways to help
 
 - **Test it.** Run through the [test plan on the website](https://www.wakekeeper.tech/#test) on your PC and report anything odd.
-- **Report a bug.** Use the [bug report form](https://github.com/SurajsinghBayas/wakekeeper/issues/new/choose) and attach a diagnostic log (right-click the cup › Help & Feedback › Diagnostic logging).
+- **Report a bug.** Use the [bug report form](https://github.com/SurajsinghBayas/wakekeeper/issues/new/choose) and attach a diagnostic log (Settings › General › Diagnostic logging).
 - **Suggest a feature.** Open a feature idea and describe the situation you're in, not just the button you want.
 - **Send code.** Look for issues labelled [`good first issue`](https://github.com/SurajsinghBayas/wakekeeper/labels/good%20first%20issue) or [`help wanted`](https://github.com/SurajsinghBayas/wakekeeper/labels/help%20wanted).
 

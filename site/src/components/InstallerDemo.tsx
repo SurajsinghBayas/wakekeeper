@@ -128,8 +128,8 @@ export function InstallerDemo() {
                 <div className="p-5 sm:p-6">
                   <p className="text-lg font-semibold text-balance">WakeKeeper is installed</p>
                   <p className="mt-3 text-sm text-pretty text-slate-600">
-                    Look for the cup next to the clock. Click it to keep your PC awake; right-click for timers, lid-closed mode and
-                    settings.
+                    WakeKeeper opens its window when you click Finish. After you close it, it stays next to the clock as a cup: click
+                    it to keep your PC awake, right-click for timers and lid-closed mode.
                   </p>
                   <div className="mt-4">
                     <Option checked={launch} onChange={setLaunch} label="Start WakeKeeper now" />

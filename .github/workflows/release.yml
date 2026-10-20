@@ -1,0 +1,39 @@
+name: Release
+
+# Push a tag like v1.3.0 to build, test-install and publish WakeKeeper-Setup.exe and WakeKeeper-Portable.zip.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Build
+        shell: pwsh
+        run: |
+          $version = '${{ github.ref_name }}'.TrimStart('v')
+          dotnet publish WakeKeeper.csproj -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -p:Version=$version -warnaserror -o out/full
+          New-Item -ItemType Directory -Force out/release | Out-Null
+          if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) { $env:PATH = "C:\Program Files (x86)\NSIS;$env:PATH" }
+          Push-Location installer; makensis -V2 "/DVERSION=$version" WakeKeeper.nsi; $code = $LASTEXITCODE; Pop-Location
+          if ($code -ne 0) { exit $code }
+          Compress-Archive -Path out/full/WakeKeeper.exe -DestinationPath out/release/WakeKeeper-Portable.zip
+      - name: Check the installer works
+        shell: pwsh
+        run: ./tests/lifecycle.ps1 -Setup out/release/WakeKeeper-Setup.exe -Shots shots
+      - name: Publish
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $notes = "Download **WakeKeeper-Setup.exe** and run it. Windows 10 and 11, 64-bit, no admin rights needed.`n`nSHA-256`n"
+          foreach ($f in Get-ChildItem out/release) { $notes += "- ``$($f.Name)``: ``$((Get-FileHash $f.FullName -Algorithm SHA256).Hash.ToLower())```n" }
+          gh release create '${{ github.ref_name }}' out/release/WakeKeeper-Setup.exe out/release/WakeKeeper-Portable.zip --title "WakeKeeper ${{ github.ref_name }}" --notes $notes

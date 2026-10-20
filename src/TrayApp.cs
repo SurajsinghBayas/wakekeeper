@@ -6,9 +6,7 @@ namespace WakeKeeper;
 /// <summary>System-tray application: icon, menu, timers, hot keys and power events.</summary>
 internal sealed class TrayApp : ApplicationContext
 {
-    // Grouped the way the menu shows them; a separator goes between groups.
-    private static readonly int[][] MinuteGroups = { new[] { 5 }, new[] { 10, 15 }, new[] { 20, 25 }, new[] { 30, 35 }, new[] { 40, 45 }, new[] { 50, 55 } };
-    private static readonly int[][] HourGroups = { new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9 }, new[] { 10, 12, 24 } };
+    private static readonly int[] MenuDurations = { 15, 30, 60, 120, 240, 480 };
 
     private readonly Settings _settings;
     private readonly SessionManager _sessions;
@@ -20,17 +18,19 @@ internal sealed class TrayApp : ApplicationContext
     private readonly HotkeyWindow _hotkeys;
     private SettingsForm? _settingsForm;
     private AboutDialog? _about;
+    private MainWindow? _main;
     private int _tickCount;
     private Icon? _countdownIcon;
     private string? _countdownLabel;
 
-    public TrayApp(InstanceSignals signals)
+    public TrayApp(InstanceSignals signals, bool showWindow)
     {
         bool firstRun = !Settings.Exists;
         _settings = Settings.Load();
         Log.Enabled = _settings.DebugMode;
         // The installer may have registered (or the user removed) the startup entry; the registry is the truth.
         _settings.LaunchAtLogin = Startup.IsEnabled;
+        if (_settings.LaunchAtLogin) Startup.Apply(true); // older versions registered the entry without --background
         LidControl.Restore(); // recover from a crash while lid-closed mode was active
         _sessions = new SessionManager(_settings);
         _triggers = new TriggerEngine(_settings, _sessions);
@@ -67,18 +67,52 @@ internal sealed class TrayApp : ApplicationContext
         var ui = SynchronizationContext.Current!;
         signals.Listen(
             onQuit: () => ui.Post(_ => ExitThread(), null),
-            onShow: () => ui.Post(_ => _tray.ShowBalloonTip(4000, "WakeKeeper is already running",
-                "Click the cup in the taskbar to keep your PC awake. Right-click it for more options.", ToolTipIcon.None), null));
+            onShow: () => ui.Post(_ => ShowMainWindow(), null));
 
         if (_settings.StartSessionAtLaunch) _sessions.StartDefault();
         UpdateTray();
 
-        if (firstRun)
-        {
-            _settings.Save();
-            _tray.ShowBalloonTip(8000, "WakeKeeper is ready",
-                "Click the cup in the taskbar to keep your PC awake. Right-click it for timers, lid-closed mode and more.", ToolTipIcon.None);
-        }
+        if (firstRun) _settings.Save();
+        // Opened by the user (Start menu, desktop, installer): show the window so it's obvious WakeKeeper is running.
+        // Started at sign-in: stay quietly in the tray.
+        if (showWindow) ShowMainWindow();
+    }
+
+    // Used by the Windows UI tests in tests/WakeKeeper.Tests.
+    internal SessionManager Sessions => _sessions;
+    internal Settings CurrentSettings => _settings;
+    internal MainWindow? Window => _main;
+    internal SettingsForm? SettingsWindow => _settingsForm;
+    internal AboutDialog? AboutWindow => _about;
+    internal ContextMenuStrip BuildMenuForTest() { BuildMenu(); return _tray.ContextMenuStrip!; }
+    internal void Tick1s() => Tick();
+
+    public void ShowMainWindow()
+    {
+        if (_main is not { IsDisposed: false }) _main = new MainWindow(this, _settings, _sessions);
+        _main.Refresh();
+        _main.Show();
+        if (_main.WindowState == FormWindowState.Minimized) _main.WindowState = FormWindowState.Normal;
+        _main.Activate();
+        _main.BringToFront();
+    }
+
+    /// <summary>The first time the window is closed, explain where WakeKeeper went.</summary>
+    public void OnMainWindowHidden()
+    {
+        if (_settings.SeenTrayHint) return;
+        _settings.SeenTrayHint = true;
+        _settings.Save();
+        _tray.ShowBalloonTip(6000, "WakeKeeper is still running",
+            "Find the cup next to the clock (click ^ if it's hidden). Click it to start or stop, right-click for more.", ToolTipIcon.None);
+    }
+
+    /// <summary>The app icon as a bitmap, for the main window header.</summary>
+    public static Bitmap AppTile(int size)
+    {
+        if (Environment.ProcessPath is { } path && Icon.ExtractAssociatedIcon(path) is { } icon)
+            using (icon) using (var sized = new Icon(icon, size, size)) return sized.ToBitmap();
+        return new Bitmap(size, size);
     }
 
     private void Tick()
@@ -87,6 +121,7 @@ internal sealed class TrayApp : ApplicationContext
         if (++_tickCount % 5 == 0) _triggers.Tick();
         _driveSpinner.Tick();
         if (_sessions.Current?.Remaining != null) UpdateTray();
+        _main?.Tick();
     }
 
     private void ToggleSession()
@@ -95,7 +130,7 @@ internal sealed class TrayApp : ApplicationContext
         else _sessions.StartDefault();
     }
 
-    private void EndSession()
+    public void EndSession()
     {
         // Ending a Trigger session would immediately restart it, so offer to pause Triggers.
         if (_sessions.Current is { Kind: SessionKind.Trigger })
@@ -163,142 +198,81 @@ internal sealed class TrayApp : ApplicationContext
         menu.Items.Clear();
         var s = _sessions.Current;
 
-        if (s != null)
-        {
-            menu.Items.Add(new ToolStripMenuItem(s.Describe()) { Enabled = false });
-            menu.Items.Add("&End session", null, (_, _) => EndSession());
-            if (s.Kind is SessionKind.Duration or SessionKind.Until)
-            {
-                var extend = new ToolStripMenuItem("Add time");
-                foreach (var m in new[] { 15, 30, 60, 120 })
-                    extend.DropDownItems.Add(FormatMinutes(m), null, (_, _) => _sessions.Extend(m));
-                menu.Items.Add(extend);
-            }
-        }
-        else
-        {
-            menu.Items.Add(new ToolStripMenuItem("Not keeping your PC awake") { Enabled = false });
-        }
-
-        if (SystemProbe.HasBattery)
-            menu.Items.Add(Check("Keep running with lid closed", _settings.PreventSleepWhenLidClosed, SetLidClosedMode));
-
-        menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add(new ToolStripMenuItem("Keep awake:") { Enabled = false });
-        menu.Items.Add(new ToolStripMenuItem("&Until I stop it", null, (_, _) => _sessions.Start(new Session { Kind = SessionKind.Indefinite }))
+        menu.Items.Add(new ToolStripMenuItem(s == null ? "Your PC can sleep normally" : $"Awake · {s.Describe()}") { Enabled = false });
+        var toggle = new ToolStripMenuItem(s == null ? "&Keep awake" : "&Stop keeping awake", null, (_, _) => ToggleSession())
         {
             ShortcutKeyDisplayString = _settings.StartEndHotkey.IsSet ? _settings.StartEndHotkey.ToString() : null,
-        });
-        menu.Items.Add(DurationMenu("&Minutes", MinuteGroups, 1));
-        menu.Items.Add(DurationMenu("&Hours", HourGroups, 60));
-        menu.Items.Add("&Custom time...", null, (_, _) => PromptTime());
+        };
+        toggle.Font = new Font(toggle.Font, FontStyle.Bold);
+        menu.Items.Add(toggle);
 
-        var apps = new ToolStripMenuItem("While an &app is open");
-        foreach (var name in SystemProbe.WindowedProcessNames())
-            apps.DropDownItems.Add(name, null, (_, _) => _sessions.Start(new Session { Kind = SessionKind.WhileApp, AppName = name }));
-        if (apps.DropDownItems.Count == 0) apps.Enabled = false;
-        menu.Items.Add(apps);
-        menu.Items.Add("Until &downloads finish", null, (_, _) => _sessions.Start(new Session { Kind = SessionKind.WhileDownloading }));
+        var forTime = new ToolStripMenuItem("Keep awake &for");
+        foreach (var m in MenuDurations)
+            forTime.DropDownItems.Add(FormatMinutes(m), null, (_, _) => StartFor(m));
+        forTime.DropDownItems.Add(new ToolStripSeparator());
+        forTime.DropDownItems.Add("Until I stop it", null, (_, _) => _sessions.Start(new Session { Kind = SessionKind.Indefinite }));
+        forTime.DropDownItems.Add("&Custom time…", null, (_, _) => PromptTime(null));
+        menu.Items.Add(forTime);
+
+        var whileItem = new ToolStripMenuItem("Keep awake &while");
+        var apps = new ToolStripMenuItem("An &app is open");
+        foreach (ToolStripItem item in AppsMenu().Items.Cast<ToolStripItem>().ToList()) apps.DropDownItems.Add(item);
+        whileItem.DropDownItems.Add(apps);
+        whileItem.DropDownItems.Add("&Downloads finish", null, (_, _) => _sessions.Start(new Session { Kind = SessionKind.WhileDownloading }));
+        menu.Items.Add(whileItem);
+
+        if (s is { Kind: SessionKind.Duration or SessionKind.Until })
+        {
+            var extend = new ToolStripMenuItem("Add &time");
+            foreach (var m in new[] { 15, 30, 60, 120 })
+                extend.DropDownItems.Add($"+ {FormatMinutes(m)}", null, (_, _) => _sessions.Extend(m));
+            menu.Items.Add(extend);
+        }
 
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add(QuickSettingsMenu());
-        menu.Items.Add("&Settings...", null, (_, _) => ShowSettings());
+        if (SystemProbe.HasBattery)
+            menu.Items.Add(Check("Keep running with &lid closed", _settings.PreventSleepWhenLidClosed, SetLidClosedMode));
+        menu.Items.Add(Check("Keep the screen &on", !_settings.AllowDisplaySleep, v => _sessions.SetDisplaySleep(!v)));
 
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("About WakeKeeper", null, (_, _) => ShowAbout());
-        menu.Items.Add(SupportMenu());
+        var open = new ToolStripMenuItem("&Open WakeKeeper", null, (_, _) => ShowMainWindow());
+        menu.Items.Add(open);
+        menu.Items.Add("S&ettings…", null, (_, _) => ShowSettings());
+        menu.Items.Add(HelpMenu());
 
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("&Quit WakeKeeper", null, (_, _) => ExitThread());
     }
 
-    private ToolStripMenuItem DurationMenu(string text, int[][] groups, int unitMinutes)
+    /// <summary>Apps with a window, for "Keep awake while an app is open".</summary>
+    public ContextMenuStrip AppsMenu()
     {
-        var item = new ToolStripMenuItem(text);
-        foreach (var group in groups)
-        {
-            if (item.DropDownItems.Count > 0) item.DropDownItems.Add(new ToolStripSeparator());
-            foreach (var n in group)
-            {
-                int minutes = n * unitMinutes;
-                item.DropDownItems.Add(FormatMinutes(minutes), null, (_, _) => StartFor(minutes));
-            }
-        }
-        return item;
+        var menu = new ContextMenuStrip();
+        foreach (var name in SystemProbe.WindowedProcessNames())
+            menu.Items.Add(name, null, (_, _) => _sessions.Start(new Session { Kind = SessionKind.WhileApp, AppName = name }));
+        if (menu.Items.Count == 0) menu.Items.Add(new ToolStripMenuItem("No open apps found") { Enabled = false });
+        return menu;
     }
 
-    /// <summary>Quick Options mirror the saved Settings (the defaults for new sessions), not just the current session.</summary>
-    private ToolStripMenuItem QuickSettingsMenu()
+    private ToolStripMenuItem HelpMenu()
     {
-        var quick = new ToolStripMenuItem("Quick Options");
-        var items = quick.DropDownItems;
-        items.Add(new ToolStripMenuItem("Saved defaults for new sessions.\nChanges apply to the running one too.") { Enabled = false });
-
-        items.Add(new ToolStripSeparator());
-        items.Add(Header("New sessions"));
-        items.Add(Check("Let the screen turn off", _settings.AllowDisplaySleep, v => _sessions.SetDisplaySleep(v)));
-        if (SystemProbe.HasBattery)
-            items.Add(Check("Keep running with lid closed", _settings.PreventSleepWhenLidClosed, SetLidClosedMode));
-        items.Add(Check($"Allow screen saver when idle {_settings.AllowScreenSaverAfterMinutes} min", _settings.AllowScreenSaver, v => _settings.AllowScreenSaver = v));
-        if (SystemProbe.HasBattery)
-        {
-            items.Add(Check($"Stop below {_settings.LowBatteryPercent}% battery", _settings.EndSessionOnLowBattery, v => _settings.EndSessionOnLowBattery = v));
-            items.Add(Check("Stop when unplugged", _settings.EndSessionIfUnplugged, v => _settings.EndSessionIfUnplugged = v));
-        }
-
-        items.Add(new ToolStripSeparator());
-        items.Add(Header("When I'm away"));
-        items.Add(Check($"Lock the PC when idle {_settings.LockScreenAfterMinutes} min", _settings.LockScreenWhenIdle, v => _settings.LockScreenWhenIdle = v));
-        items.Add(Check($"Nudge the mouse when idle {_settings.MoveCursorAfterMinutes} min", _settings.MoveCursorWhenIdle, v => _settings.MoveCursorWhenIdle = v));
-
-        items.Add(new ToolStripSeparator());
-        items.Add(Header("More"));
-        var triggers = _settings.TriggersEnabled && _triggers.Paused ? "Auto-start rules (paused)" : "Auto-start rules";
-        items.Add(Check(triggers, _settings.TriggersEnabled, v => _settings.TriggersEnabled = v));
-        items.Add(Check("Keep drives spinning", _settings.SpinDrivesEnabled, v => _settings.SpinDrivesEnabled = v));
-        items.Add(Check("Show time left on the tray icon", _settings.ShowTimeRemainingInTray, v =>
-        {
-            _settings.ShowTimeRemainingInTray = v;
-            UpdateTray();
-        }));
-        return quick;
-    }
-
-    private ToolStripMenuItem SupportMenu()
-    {
-        var support = new ToolStripMenuItem("Help && Feedback");
-        var items = support.DropDownItems;
+        var help = new ToolStripMenuItem("&Help");
+        var items = help.DropDownItems;
         items.Add("Troubleshooting guide", null, (_, _) => Links.Open(Links.Help));
         items.Add("Email support", null, (_, _) => Links.Open(Links.Email));
         items.Add("Report a bug", null, (_, _) => Links.Open(Links.Contact));
-        items.Add(Check("Diagnostic logging", _settings.DebugMode, v =>
-        {
-            _settings.DebugMode = Log.Enabled = v;
-            if (v) Log.Write($"Debug mode on, WakeKeeper {Links.Version}, {Environment.OSVersion}");
-        }));
-        items.Add(new ToolStripMenuItem("Open diagnostic log", null, (_, _) => Links.Open(Log.FilePath)) { Enabled = File.Exists(Log.FilePath) });
-
         items.Add(new ToolStripSeparator());
-        items.Add("Restore Windows Power Settings...", null, (_, _) => RestorePowerSettings());
-        items.Add("Uninstall WakeKeeper...", null, (_, _) => Links.Open("ms-settings:appsfeatures"));
-
+        items.Add("Restore Windows power settings…", null, (_, _) => RestorePowerSettings());
         items.Add(new ToolStripSeparator());
-        items.Add("Star on GitHub", null, (_, _) => Links.Open(Links.Star));
-
-        items.Add(new ToolStripSeparator());
-        items.Add("View source code", null, (_, _) => Links.Open(Links.Contribute));
-        return support;
+        items.Add("About WakeKeeper", null, (_, _) => ShowAbout());
+        return help;
     }
 
-    private static ToolStripMenuItem Header(string text) => new(text)
-    {
-        Enabled = false,
-        Font = new Font(SystemFonts.MenuFont ?? Control.DefaultFont, FontStyle.Bold),
-    };
-
-    private void SetLidClosedMode(bool v)
+    public void SetLidClosedMode(bool v)
     {
         _settings.PreventSleepWhenLidClosed = v;
+        _settings.Save();
+        _main?.Refresh();
         if (_sessions.Current == null) return;
         if (v && !LidControl.Override())
             _tray.ShowBalloonTip(5000, "Lid-closed mode unavailable", "Windows didn't allow the lid setting to be changed on this PC.", ToolTipIcon.Warning);
@@ -317,7 +291,7 @@ internal sealed class TrayApp : ApplicationContext
         _tray.ShowBalloonTip(4000, "Power settings restored", "Windows will sleep normally again.", ToolTipIcon.None);
     }
 
-    private void ShowAbout()
+    public void ShowAbout()
     {
         if (_about is { IsDisposed: false }) { _about.Activate(); return; }
         _about = new AboutDialog(_settings);
@@ -331,17 +305,17 @@ internal sealed class TrayApp : ApplicationContext
         return item;
     }
 
-    private void StartFor(int minutes) =>
+    public void StartFor(int minutes) =>
         _sessions.Start(new Session { Kind = SessionKind.Duration, Ends = DateTime.Now.AddMinutes(minutes) });
 
-    private void PromptTime()
+    public void PromptTime(IWin32Window? owner)
     {
         using var dialog = new TimeDialog();
-        if (dialog.ShowDialog() != DialogResult.OK || dialog.Ends is not { } ends) return;
+        if (dialog.ShowDialog(owner) != DialogResult.OK || dialog.Ends is not { } ends) return;
         _sessions.Start(new Session { Kind = dialog.IsDuration ? SessionKind.Duration : SessionKind.Until, Ends = ends });
     }
 
-    private void ShowSettings()
+    public void ShowSettings()
     {
         if (_settingsForm is { IsDisposed: false }) { _settingsForm.Activate(); return; }
         _settingsForm = new SettingsForm(_settings);
@@ -350,6 +324,7 @@ internal sealed class TrayApp : ApplicationContext
             _settings.Save();
             Startup.Apply(_settings.LaunchAtLogin);
             RegisterHotkeys();
+            _main?.Refresh();
         };
         _settingsForm.Show();
     }
@@ -417,6 +392,9 @@ internal sealed class TrayApp : ApplicationContext
         SystemEvents.SessionSwitch -= OnSessionSwitch;
         _hotkeys.UnregisterAll();
         _hotkeys.DestroyHandle();
+        _main?.Dispose();
+        _settingsForm?.Dispose();
+        _about?.Dispose();
         _tray.Visible = false;
         _tray.Dispose();
         _countdownIcon?.Dispose();
@@ -473,7 +451,8 @@ internal static class Startup
     {
         using var key = Registry.CurrentUser.OpenSubKey(RunKey, writable: true);
         if (key == null) return;
-        if (enabled) key.SetValue("WakeKeeper", $"\"{Environment.ProcessPath}\"");
+        // --background: starting at sign-in stays in the tray instead of opening the window.
+        if (enabled) key.SetValue("WakeKeeper", $"\"{Environment.ProcessPath}\" --background");
         else key.DeleteValue("WakeKeeper", throwOnMissingValue: false);
     }
 }
