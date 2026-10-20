@@ -33,7 +33,7 @@ jobs:
             $env:PATH = "$nsis;$env:PATH"
           }
           New-Item -ItemType Directory -Force out/release | Out-Null
-          Push-Location installer; makensis -V2 -DVERSION=1.3.0 WakeKeeper.nsi; Pop-Location
+          Push-Location installer; makensis -V3 -DVERSION=1.3.0 WakeKeeper.nsi; $code = $LASTEXITCODE; Pop-Location; exit $code
       - name: UI and behaviour tests
         shell: pwsh
         run: |
